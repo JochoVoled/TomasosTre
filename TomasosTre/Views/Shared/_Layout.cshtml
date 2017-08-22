@@ -30,9 +30,8 @@
             </div>
             <div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav">
-                    <li><a asp-area="" asp-controller="Home" asp-action="Index">Hello</a></li>
-                    <li><a asp-area="" asp-controller="Home" asp-action="About">World</a></li>
-                    <li><a asp-area="" asp-controller="Home" asp-action="Contact">Contact</a></li>
+                    @* Only show if in Admin role
+                        <li><a asp-area="" asp-controller="Admin" asp-action="Index">Admin</a></li>*@
                 </ul>
                 @await Html.PartialAsync("_LoginPartial")
             </div>
