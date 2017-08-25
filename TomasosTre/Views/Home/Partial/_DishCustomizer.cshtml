@@ -1,0 +1,37 @@
+﻿@{
+}
+@model TomasosTre.ViewModels.DishCustomizationViewModel
+
+<div class="modal-content">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        @if (!string.IsNullOrEmpty(Model.Name))
+        {
+            <h4 class="modal-title">Customize this @Model.Name</h4>
+        }
+    </div>
+    <div class="modal-body">
+    @if (Model.DishIngredients != null)
+    {
+        @foreach (var item in Model.DishIngredients)
+        {
+            <div data-dish="@item.Id">
+                <span>@item.Name</span>
+                @if (item.IsChecked)
+                {
+                <input type="checkbox" checked />
+                }
+                else
+                {
+                <input type="checkbox" />
+                }
+            </div>
+        }
+    }
+    </div>
+    <div class="modal-footer">
+        @* When apply, send dishName and this list back, look for the changes...? *@
+        <button id="dish-customize" type="button" class="btn btn-primary" data-dish="dishId">Apply</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+    </div>
+</div>

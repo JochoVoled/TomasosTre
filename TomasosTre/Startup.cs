@@ -36,6 +36,7 @@ namespace TomasosTre
             services.AddTransient<IEmailSender, EmailSender>();
 
             services.AddMvc();
+            services.AddSession();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -52,6 +53,7 @@ namespace TomasosTre
                 app.UseExceptionHandler("/Home/Error");
             }
 
+            app.UseSession();
             app.UseStaticFiles();
 
             app.UseAuthentication();
