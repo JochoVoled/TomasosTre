@@ -12,11 +12,11 @@ namespace TomasosTre.Controllers
     /// <summary>
     /// Manages the Order state. This controller is imported from the previous ASP .NET course. No point re-inventing the wheel.
     /// </summary>
-    public class OrderController : Controller
+    public class ApiController : Controller
     {
         private readonly ApplicationDbContext _context;
 
-        public OrderController(ApplicationDbContext context)
+        public ApiController(ApplicationDbContext context)
         {
             _context = context;
         }
