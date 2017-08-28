@@ -3,14 +3,13 @@ using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using TomasosTre.Models;
 using TomasosTre.Data;
-using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json;
+using TomasosTre.Services;
 
 namespace TomasosTre.Controllers
 {
     // TODO Move most methods here to services, create an API Controller that directs to services for future cases like these
     /// <summary>
-    /// Manages the Order state. This controller is imported from the previous ASP .NET course. No point re-inventing the wheel.
+    /// Takes calls from front-end and re-routes to services
     /// </summary>
     public class ApiController : Controller
     {
@@ -29,7 +28,7 @@ namespace TomasosTre.Controllers
         public IActionResult Add(int id)
         {
             Dish option = _context.Dishes.First(dish => dish.Id == id);
-            List<OrderRow> order = Load();
+            List<OrderRow> order = SessionService.Load(HttpContext);
             OrderRow row = order.SingleOrDefault(or => or.DishId == option.Id);
             if (row != null)
             {
@@ -46,7 +45,7 @@ namespace TomasosTre.Controllers
                 order.Add(row);
             }
 
-            Save(order);
+            SessionService.Save(HttpContext,order);
 
             return RedirectToAction("CartPartial", "Home");
         }
@@ -58,12 +57,12 @@ namespace TomasosTre.Controllers
         /// <returns>Re-directs to the CartPartial</returns>
         public IActionResult Remove(int id)
         {
-            List<OrderRow> order = Load();
+            List<OrderRow> order = SessionService.Load(HttpContext);
             OrderRow remove = order.Find(o => o.DishId == id);
 
             order.Remove(remove);
 
-            Save(order);
+            SessionService.Save(HttpContext,order);
             return RedirectToAction("CartPartial", "Home");
         }
         /// <summary>
@@ -74,12 +73,12 @@ namespace TomasosTre.Controllers
         /// <returns>Re-directs to the CartPartial</returns>
         public IActionResult Set(int id, int amount)
         {
-            List<OrderRow> order = Load();
+            List<OrderRow> order = SessionService.Load(HttpContext);
             OrderRow update = order.Find(o => o.DishId == id);
 
             update.Amount = amount;
 
-            Save(order);
+            SessionService.Save(HttpContext,order);
             return RedirectToAction("CartPartial", "Home");
         }
         public IActionResult CustomizedDish(int baseDishId, List<int> isOrderedIngredients)
@@ -102,7 +101,7 @@ namespace TomasosTre.Controllers
             IEnumerable<Ingredient> hasAdded = orderedIngredients.Except(optionIngredients);
 
             // Create a new dish, to connect this instance to the differing ingredients
-            //var order = Load();
+            //var order = SessionService.Load(HttpContext);
             var newOrder = new OrderRow
             {
                 Dish = option,
@@ -110,7 +109,7 @@ namespace TomasosTre.Controllers
             };
             // TODO Should save this new orderRow to context.OrderRows, or to session variable
             //order.Add(newOrder);
-            //Save(order);
+            //SessionService.Save(HttpContext,order);
 
             // Set up the diffs in a second session variable, noting if its extra or removed
             // TODO Should be able to simplify this to an _context.OrderRowIngredients.AddRange(firstrow, secondrow), if I get access
@@ -135,35 +134,6 @@ namespace TomasosTre.Controllers
             }));
 
             return RedirectToAction("CartPartial", "Home");
-        }
-
-        /// <summary>
-        /// Saves current Order to session variable
-        /// </summary>
-        /// <param name="order">Current Order</param>
-        private void Save(List<OrderRow> order)
-        {
-            var serializedValue = JsonConvert.SerializeObject(order);
-            HttpContext.Session.SetString("Order", serializedValue);
-        }
-        /// <summary>
-        /// Loads current Order from session variable
-        /// </summary>
-        /// <returns>Current Order</returns>
-        private List<OrderRow> Load()
-        {
-            List<OrderRow> order;
-            if (HttpContext.Session.GetString("Order") == null)
-            {
-                order = new List<OrderRow>();
-            }
-            else
-            {
-                var str = HttpContext.Session.GetString("Order");
-                order = JsonConvert.DeserializeObject<List<OrderRow>>(str);
-            }
-
-            return order;
         }
     }
 }

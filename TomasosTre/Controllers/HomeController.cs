@@ -7,6 +7,7 @@ using TomasosTre.ViewModels.Home;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using TomasosTre.Services;
 
 namespace TomasosTre.Controllers
 {
@@ -49,11 +50,7 @@ namespace TomasosTre.Controllers
         {
             var CartModel = new CartViewModel();
 
-            if (HttpContext.Session.GetString("Order") != null)
-            {
-                string str = HttpContext.Session.GetString("Order");
-                CartModel.OrderRows = JsonConvert.DeserializeObject<List<OrderRow>>(str);
-            }
+            CartModel.OrderRows = SessionService.Load(HttpContext);
             CartModel.OrderRows.ForEach(x => CartModel.PriceSum += (x.Dish.Price * x.Amount));
             return PartialView("Partial/_Cart",CartModel);
         }
