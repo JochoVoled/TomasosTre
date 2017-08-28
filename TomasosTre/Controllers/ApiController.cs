@@ -132,6 +132,12 @@ namespace TomasosTre.Controllers
                 OrderRowId = newOrder.OrderRowId,
                 OrderRow = newOrder
             }));
+            
+            
+            
+            //// Add orderRow to DbContext
+            //_context.OrderRowIngredients.AddRange(orderRowIngredients);
+            //_context.SaveChanges();
 
             return RedirectToAction("CartPartial", "Home");
         }
