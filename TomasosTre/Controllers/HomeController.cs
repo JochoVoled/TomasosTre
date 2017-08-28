@@ -69,11 +69,11 @@ namespace TomasosTre.Controllers
             }
             var dishIngredients = _context.DishIngredientcses.Where(x => x.DishId == id).ToList();
             var model = new ViewModels.DishCustomizationViewModel{
-                Name = dish.Name
+                Dish = dish
             };
             foreach (var i in allIngredients)
             {
-                var isChecked = _context.DishIngredientcses.Where(d => d.DishId == dish.Id).FirstOrDefault(di => di.IngredientId == i.Id) != null ? true : false;
+                var isChecked = _context.DishIngredientcses.Where(d => d.DishId == dish.Id).FirstOrDefault(di => di.IngredientId == i.Id) != null;
                 model.DishIngredients.Add(new ViewModels.DishCustomizationStruct
                 {
                     Id = i.Id,

@@ -36,7 +36,8 @@ function createOrderRowEvents() {
     $(".edit").on("click", function() {
         // Open div with checkboxes that lets user customize dish
         $.get("/Home/DishCustomizePartial", { id: $(this).data("dish") }, function(response) {
-                $("#dish-customizer-target").html(response);
+            $("#dish-customizer-target").html(response);
+                registerCustomDishEvents();
             }
         );
     });
@@ -45,7 +46,28 @@ function createOrderRowEvents() {
         var dishId = $(this).data("dish");
         $.post("/Order/Remove", { id: dishId }, function (response) {
             $("#cart").html(response);
-            createOrderRowEvents()
+            createOrderRowEvents();
+        });
+    });
+}
+
+function registerCustomDishEvents() {
+    $("#dish-customize").on("click", function ()
+    {
+        console.log("Howdy there");
+        var data = {
+            baseDishId: "",
+            isOrderedIngredients: []
+        };
+        data.baseDishId = $("#title").data("dish");
+        // next row taken from https://stackoverflow.com/questions/416752/select-values-of-checkbox-group-with-jquery
+        $.each($("input[name='ingredient']:checked"), function ()
+        {
+            data.isOrderedIngredients.push($(this).data("dish"));
+        });
+        $.post("/Order/CustomizedDish", data, function (response)
+        {
+            console.log(response);
         });
     });
 }

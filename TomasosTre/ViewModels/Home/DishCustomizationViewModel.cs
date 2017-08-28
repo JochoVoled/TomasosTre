@@ -1,10 +1,11 @@
 ﻿using System.Collections.Generic;
+using TomasosTre.Models;
 
 namespace TomasosTre.ViewModels
 {
     public class DishCustomizationViewModel
     {
-        public string Name { get; set; }
+        public Dish Dish { get; set; }
         public List<DishCustomizationStruct> DishIngredients { get; set; } = new List<DishCustomizationStruct>();
 
     }
