@@ -48,9 +48,8 @@ namespace TomasosTre.Controllers
         /// <returns>The Cart partial view</returns>
         public IActionResult CartPartial()
         {
-            var cartModel = new CartViewModel();
+            var cartModel = new CartViewModel {OrderRows = SessionService.LoadOrderRows(HttpContext)};
 
-            cartModel.OrderRows = SessionService.Load(HttpContext);
             cartModel.OrderRows.ForEach(x => cartModel.PriceSum += (x.Dish.Price * x.Amount));
             return PartialView("Partial/_Cart",cartModel);
         }
