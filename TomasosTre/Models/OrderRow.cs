@@ -8,6 +8,6 @@
         public int Amount { get; set; }
 
         public Dish Dish { get; set; }
-        //public Order Order { get; set; }
+        public Order Order { get; set; }
     }
 }
