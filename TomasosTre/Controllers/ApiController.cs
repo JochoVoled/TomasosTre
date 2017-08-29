@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using TomasosTre.Models;
 using TomasosTre.Data;
 using TomasosTre.Services;
+using System;
 
 namespace TomasosTre.Controllers
 {
@@ -94,7 +95,7 @@ namespace TomasosTre.Controllers
         public IActionResult CustomizedDish(int baseDishId, List<int> isOrderedIngredients)
         {
             Dish option = _context.Dishes.First(dish => dish.Id == baseDishId);
-            var optionIngredients = _context.DishIngredientcses.Where(x => x.DishId == baseDishId).Select(x => x.Ingredient).ToList();
+            var optionIngredients = _context.DishIngredients.Where(x => x.DishId == baseDishId).Select(x => x.Ingredient).ToList();
             List<Ingredient> orderedIngredients = new List<Ingredient>();
 
             isOrderedIngredients.ForEach(x => orderedIngredients.Add(_context.Ingredients.First(y => y.Id == x)));
@@ -114,6 +115,7 @@ namespace TomasosTre.Controllers
                 order.Find(x => x.DishId == baseDishId).Amount -= 1;
             }
             
+            // Set up a new Dish
             var newDish = new Dish
             {
                 Price = option.Price,
@@ -123,7 +125,7 @@ namespace TomasosTre.Controllers
             var newIngredients = optionIngredients.Except(hasDeselected).ToList().Union(hasAdded).ToList();
             newIngredients.ForEach(x => newDish.DishIngredients.Add(new DishIngredient
             {
-                Dish = newDish,
+                DishId = newDish.Id,
                 IngredientId = x.Id
             }));
             var newOrder = new OrderRow
@@ -133,6 +135,12 @@ namespace TomasosTre.Controllers
                 Amount = 1,
                 
             };
+
+            // Add it to the table, if it's a new combination of ingredients
+            if (IsDishNew(newDish))
+            {
+                _context.Dishes.Add(newDish);
+            }
             order.Add(newOrder);
 
             // Set up the diffs in a second session variable, noting if its extra or removed
@@ -169,6 +177,29 @@ namespace TomasosTre.Controllers
             SessionService.Save(HttpContext, order);
             return RedirectToAction("CartPartial", "Home");
         }
+
+        private bool IsDishNew(Dish newDish)
+        {
+            // All customized X are called "custom X", so filter that first for performance
+            var filtered = _context.Dishes.Where(x => x.Name == newDish.Name).ToList();
+            if (!filtered.Any())
+            {
+                return true;
+            }
+            // Check if any dish has the same - no more, no less - ingredants as the new dish.
+            foreach (var dish in filtered)
+            {
+                // A except B, and B except A, can only be equal if A = B
+                var equals = dish.DishIngredients.Except(newDish.DishIngredients) == newDish.DishIngredients.Except(dish.DishIngredients);
+                if (equals)
+                {
+                    return false;
+                }
+            }
+            // if no Dishes remain, there are no duplicates; Dish is new
+            return true;
+        }
+
         /// <summary>
         /// Draft method. Save cart values stored in session to DB, and clear session
         /// </summary>
