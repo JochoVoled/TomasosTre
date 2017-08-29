@@ -8,23 +8,56 @@ namespace TomasosTre.Services
     public static class SessionService
     {
         #region Save Methods
+
         /// <summary>
         /// Saves current Order to session variable
         /// </summary>
+        /// <param name="httpContext">Pass on static HttpContext</param>
         /// <param name="order">Current Order</param>
-        public static void Save(HttpContext HttpContext,List<OrderRow> order)
+        public static void Save(HttpContext httpContext,List<OrderRow> order)
         {
             var serializedValue = JsonConvert.SerializeObject(order);
-            HttpContext.Session.SetString("Order", serializedValue);
+            httpContext.Session.SetString("Order", serializedValue);
         }
+
         /// <summary>
         /// Saves current Order to session variable
         /// </summary>
+        /// <param name="httpContext">Pass on static HttpContext</param>
         /// <param name="ori">Current Order Row Ingredients</param>
-        public static void Save(HttpContext HttpContext, List<OrderRowIngredient> ori)
+        public static void Save(HttpContext httpContext, List<OrderRowIngredient> ori)
         {
+            /*TODO Fix self referencing loop
+              Newtonsoft.Json.JsonSerializationException occurred
+              HResult=0x80131500
+              Message=Self referencing loop detected for property 'Dish' with type 'TomasosTre.Models.Dish'. Path '[0].OrderRow.Dish.DishIngredients[0]'.
+              Source=<Cannot evaluate the exception source>
+              StackTrace:
+               at Newtonsoft.Json.Serialization.JsonSerializerInternalWriter.CheckForCircularReference(JsonWriter writer, Object value, JsonProperty property, JsonContract contract, JsonContainerContract containerContract, JsonProperty containerProperty)
+               at Newtonsoft.Json.Serialization.JsonSerializerInternalWriter.CalculatePropertyValues(JsonWriter writer, Object value, JsonContainerContract contract, JsonProperty member, JsonProperty property, JsonContract& memberContract, Object& memberValue)
+               at Newtonsoft.Json.Serialization.JsonSerializerInternalWriter.SerializeObject(JsonWriter writer, Object value, JsonObjectContract contract, JsonProperty member, JsonContainerContract collectionContract, JsonProperty containerProperty)
+               at Newtonsoft.Json.Serialization.JsonSerializerInternalWriter.SerializeValue(JsonWriter writer, Object value, JsonContract valueContract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerProperty)
+               at Newtonsoft.Json.Serialization.JsonSerializerInternalWriter.SerializeList(JsonWriter writer, IEnumerable values, JsonArrayContract contract, JsonProperty member, JsonContainerContract collectionContract, JsonProperty containerProperty)
+               at Newtonsoft.Json.Serialization.JsonSerializerInternalWriter.SerializeValue(JsonWriter writer, Object value, JsonContract valueContract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerProperty)
+               at Newtonsoft.Json.Serialization.JsonSerializerInternalWriter.SerializeObject(JsonWriter writer, Object value, JsonObjectContract contract, JsonProperty member, JsonContainerContract collectionContract, JsonProperty containerProperty)
+               at Newtonsoft.Json.Serialization.JsonSerializerInternalWriter.SerializeValue(JsonWriter writer, Object value, JsonContract valueContract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerProperty)
+               at Newtonsoft.Json.Serialization.JsonSerializerInternalWriter.SerializeObject(JsonWriter writer, Object value, JsonObjectContract contract, JsonProperty member, JsonContainerContract collectionContract, JsonProperty containerProperty)
+               at Newtonsoft.Json.Serialization.JsonSerializerInternalWriter.SerializeValue(JsonWriter writer, Object value, JsonContract valueContract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerProperty)
+               at Newtonsoft.Json.Serialization.JsonSerializerInternalWriter.SerializeObject(JsonWriter writer, Object value, JsonObjectContract contract, JsonProperty member, JsonContainerContract collectionContract, JsonProperty containerProperty)
+               at Newtonsoft.Json.Serialization.JsonSerializerInternalWriter.SerializeValue(JsonWriter writer, Object value, JsonContract valueContract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerProperty)
+               at Newtonsoft.Json.Serialization.JsonSerializerInternalWriter.SerializeList(JsonWriter writer, IEnumerable values, JsonArrayContract contract, JsonProperty member, JsonContainerContract collectionContract, JsonProperty containerProperty)
+               at Newtonsoft.Json.Serialization.JsonSerializerInternalWriter.SerializeValue(JsonWriter writer, Object value, JsonContract valueContract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerProperty)
+               at Newtonsoft.Json.Serialization.JsonSerializerInternalWriter.Serialize(JsonWriter jsonWriter, Object value, Type objectType)
+               at Newtonsoft.Json.JsonSerializer.SerializeInternal(JsonWriter jsonWriter, Object value, Type objectType)
+               at Newtonsoft.Json.JsonConvert.SerializeObjectInternal(Object value, Type type, JsonSerializer jsonSerializer)
+               at Newtonsoft.Json.JsonConvert.SerializeObject(Object value)
+               at TomasosTre.Services.SessionService.Save(HttpContext HttpContext, List`1 ori) in C:\Source\Repos\TomasosTre\TomasosTre\Services\SessionService.cs:line 26
+               at TomasosTre.Controllers.ApiController.CustomizedDish(Int32 baseDishId, List`1 isOrderedIngredients) in C:\Source\Repos\TomasosTre\TomasosTre\Controllers\ApiController.cs:line 158
+               at Microsoft.Extensions.Internal.ObjectMethodExecutor.Execute(Object target, Object[] parameters)
+               at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.<InvokeActionMethodAsync>d__12.MoveNext()
+            */
             var serializedValue = JsonConvert.SerializeObject(ori);
-            HttpContext.Session.SetString("ORI", serializedValue);
+            httpContext.Session.SetString("ORI", serializedValue);
         }
         #endregion
 
@@ -33,17 +66,18 @@ namespace TomasosTre.Services
         /// <summary>
         /// Loads current Order from session variable
         /// </summary>
+        /// <param name="httpContext">Pass on static HttpContext</param>
         /// <returns>Current Order</returns>
-        public static List<OrderRow> LoadOrderRows(HttpContext HttpContext)
+        public static List<OrderRow> LoadOrderRows(HttpContext httpContext)
         {
             List<OrderRow> order;
-            if (HttpContext.Session.GetString("Order") == null)
+            if (httpContext.Session.GetString("Order") == null)
             {
                 order = new List<OrderRow>();
             }
             else
             {
-                var str = HttpContext.Session.GetString("Order");
+                var str = httpContext.Session.GetString("Order");
                 order = JsonConvert.DeserializeObject<List<OrderRow>>(str);
             }
 
@@ -53,17 +87,18 @@ namespace TomasosTre.Services
         /// <summary>
         /// Loads customized dishes from session variable
         /// </summary>
+        /// <param name="httpContext">Pass on static HttpContext</param>
         /// <returns>Current Order Row Ingredients</returns>
-        public static List<OrderRowIngredient> LoadOrderRowIngredients(HttpContext HttpContext)
+        public static List<OrderRowIngredient> LoadOrderRowIngredients(HttpContext httpContext)
         {
             List<OrderRowIngredient> order;
-            if (HttpContext.Session.GetString("ORI") == null)
+            if (httpContext.Session.GetString("ORI") == null)
             {
                 order = new List<OrderRowIngredient>();
             }
             else
             {
-                var str = HttpContext.Session.GetString("ORI");
+                var str = httpContext.Session.GetString("ORI");
                 order = JsonConvert.DeserializeObject<List<OrderRowIngredient>>(str);
             }
 
@@ -73,21 +108,34 @@ namespace TomasosTre.Services
         #endregion
 
         #region Clear Methods
-        public static void ClearAll(HttpContext HttpContext)
+        /// <summary>
+        /// Clears all session variables
+        /// </summary>
+        /// <param name="httpContext">Pass on static HttpContext</param>
+        public static void ClearAll(HttpContext httpContext)
         {
-            var order = LoadOrderRows(HttpContext);
-            var ori = LoadOrderRowIngredients(HttpContext);
-            Clear(HttpContext, order);
-            Clear(HttpContext, ori);
+            var order = LoadOrderRows(httpContext);
+            var ori = LoadOrderRowIngredients(httpContext);
+            Clear(httpContext, order);
+            Clear(httpContext, ori);
         }
-        public static void Clear(HttpContext HttpContext, List<OrderRow> order)
+        /// <summary>
+        /// Clears OrderRows from the session variable
+        /// </summary>
+        /// <param name="httpContext">Pass on static HttpContext</param>
+        /// <param name="order">Any List with OrderRow type</param>
+        public static void Clear(HttpContext httpContext, List<OrderRow> order)
         {
-            HttpContext.Session.SetString("Order", "");
+            httpContext.Session.SetString("Order", "");
         }
-
-        public static void Clear(HttpContext HttpContext, List<OrderRowIngredient> ori)
+        /// <summary>
+        /// Clears OrderRowIngredients from the session variable
+        /// </summary>
+        /// <param name="httpContext">Pass on static HttpContext</param>
+        /// <param name="ori">Any List with OrderRowIngredient type</param>
+        public static void Clear(HttpContext httpContext, List<OrderRowIngredient> ori)
         {
-            HttpContext.Session.SetString("ORI", "");
+            httpContext.Session.SetString("ORI", "");
         }
         #endregion
     }
