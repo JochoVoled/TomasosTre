@@ -85,34 +85,55 @@ namespace TomasosTre.Controllers
             SessionService.Save(HttpContext,order);
             return RedirectToAction("CartPartial", "Home");
         }
+        /// <summary>
+        /// Save a custom dish to session variables
+        /// </summary>
+        /// <param name="baseDishId">Id of the dish being customized</param>
+        /// <param name="isOrderedIngredients">List of selected ingredient IDs</param>
+        /// <returns>The CartPartial partial view</returns>
         public IActionResult CustomizedDish(int baseDishId, List<int> isOrderedIngredients)
         {
-            // Find the baseDish
             Dish option = _context.Dishes.First(dish => dish.Id == baseDishId);
-            // Get a list of all its ingredients (A)
             var optionIngredients = _context.DishIngredientcses.Where(x => x.DishId == baseDishId).Select(x => x.Ingredient).ToList();
-            // Get a list the ordered ingredients (B)
             List<Ingredient> orderedIngredients = new List<Ingredient>();
-            isOrderedIngredients.ForEach(x => orderedIngredients.Add(_context.Ingredients.First(y => y.Id == x)));
 
-            /* Match A and B
-                If item of A is not in B, the customer has de-selected an ingredient
-                If item of B is not in A, the customer has added an extra ingredient
-                Code for that found through https://stackoverflow.com/questions/3739246/linq-to-sql-not-contains-or-not-in#3740255 */
-            //IEnumerable<Ingredient> hasDeselected = optionIngredients.Where(x => !orderedIngredients.Select(y => y.Id).Contains(x.Id)).ToList();
+            isOrderedIngredients.ForEach(x => orderedIngredients.Add(_context.Ingredients.First(y => y.Id == x)));
             IEnumerable<Ingredient> hasDeselected = optionIngredients.Except(orderedIngredients).ToList();
-            //IEnumerable<Ingredient> hasAdded = orderedIngredients.Where(x => !optionIngredients.Select(y => y.Id).Contains(x.Id)).ToList();
-            IEnumerable<Ingredient> hasAdded = orderedIngredients.Except(optionIngredients);
+            IEnumerable<Ingredient> hasAdded = orderedIngredients.Except(optionIngredients).ToList();
 
             // Create a new dish, to connect this instance to the differing ingredients
             var order = SessionService.LoadOrderRows(HttpContext);
+
+            // Remove one occurence of base dish
+            if (order.Find(x => x.DishId == baseDishId).Amount == 1)
+            {
+                Remove(baseDishId);
+            }
+            else
+            {
+                order.Find(x => x.DishId == baseDishId).Amount -= 1;
+            }
+            
+            var newDish = new Dish
+            {
+                Price = option.Price,
+                Name = $"Custom {option.Name}",
+                DishIngredients = new List<DishIngredient>()
+            };
+            var newIngredients = optionIngredients.Except(hasDeselected).ToList().Union(hasAdded).ToList();
+            newIngredients.ForEach(x => newDish.DishIngredients.Add(new DishIngredient
+            {
+                Dish = newDish,
+                IngredientId = x.Id
+            }));
             var newOrder = new OrderRow
             {
-                Dish = option,
+                DishId = newDish.Id,
+                Dish = newDish,
                 Amount = 1,
+                
             };
             order.Add(newOrder);
-            SessionService.Save(HttpContext,order);
 
             // Set up the diffs in a second session variable, noting if its extra or removed
             var orderRowIngredients = hasDeselected.Select(ingredient => new OrderRowIngredient
@@ -134,9 +155,18 @@ namespace TomasosTre.Controllers
                 OrderRowId = newOrder.OrderRowId,
                 OrderRow = newOrder
             }));
-            
             SessionService.Save(HttpContext, orderRowIngredients);
 
+            // Modify price
+            foreach (var addedIngredient in hasAdded.Except(optionIngredients))
+            {
+                newOrder.Dish.Price += addedIngredient.Price;
+            }
+            foreach (var removeIngredient in hasDeselected.Except(optionIngredients))
+            {
+                newOrder.Dish.Price -= removeIngredient.Price;
+            }
+            SessionService.Save(HttpContext, order);
             return RedirectToAction("CartPartial", "Home");
         }
         /// <summary>
