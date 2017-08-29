@@ -8,6 +8,7 @@ using TomasosTre.Services;
 namespace TomasosTre.Controllers
 {
     // TODO Move most methods here to services, create an API Controller that directs to services for future cases like these
+    /// <inheritdoc />
     /// <summary>
     /// Takes calls from front-end and re-routes to services
     /// </summary>
@@ -25,10 +26,11 @@ namespace TomasosTre.Controllers
         /// </summary>
         /// <param name="id">The Id of the Dish being added</param>
         /// <returns>Re-directs to the CartPartial</returns>
+        //[HttpPut]
         public IActionResult Add(int id)
         {
             Dish option = _context.Dishes.First(dish => dish.Id == id);
-            List<OrderRow> order = SessionService.Load(HttpContext);
+            List<OrderRow> order = SessionService.LoadOrderRows(HttpContext);
             OrderRow row = order.SingleOrDefault(or => or.DishId == option.Id);
             if (row != null)
             {
@@ -55,9 +57,10 @@ namespace TomasosTre.Controllers
         /// </summary>
         /// <param name="id">The Id of the Dish to remove</param>
         /// <returns>Re-directs to the CartPartial</returns>
+        //[HttpDelete]
         public IActionResult Remove(int id)
         {
-            List<OrderRow> order = SessionService.Load(HttpContext);
+            List<OrderRow> order = SessionService.LoadOrderRows(HttpContext);
             OrderRow remove = order.Find(o => o.DishId == id);
 
             order.Remove(remove);
@@ -71,9 +74,10 @@ namespace TomasosTre.Controllers
         /// <param name="id">The Id of the dish whose ordered amount to change</param>
         /// <param name="amount">The new amount</param>
         /// <returns>Re-directs to the CartPartial</returns>
+        //[HttpPatch]
         public IActionResult Set(int id, int amount)
         {
-            List<OrderRow> order = SessionService.Load(HttpContext);
+            List<OrderRow> order = SessionService.LoadOrderRows(HttpContext);
             OrderRow update = order.Find(o => o.DishId == id);
 
             update.Amount = amount;
@@ -101,18 +105,16 @@ namespace TomasosTre.Controllers
             IEnumerable<Ingredient> hasAdded = orderedIngredients.Except(optionIngredients);
 
             // Create a new dish, to connect this instance to the differing ingredients
-            //var order = SessionService.Load(HttpContext);
+            var order = SessionService.LoadOrderRows(HttpContext);
             var newOrder = new OrderRow
             {
                 Dish = option,
                 Amount = 1,
             };
-            // TODO Should save this new orderRow to context.OrderRows, or to session variable
-            //order.Add(newOrder);
-            //SessionService.Save(HttpContext,order);
+            order.Add(newOrder);
+            SessionService.Save(HttpContext,order);
 
             // Set up the diffs in a second session variable, noting if its extra or removed
-            // TODO Should be able to simplify this to an _context.OrderRowIngredients.AddRange(firstrow, secondrow), if I get access
             var orderRowIngredients = hasDeselected.Select(ingredient => new OrderRowIngredient
             {
                 Ingredient = ingredient,
@@ -133,13 +135,23 @@ namespace TomasosTre.Controllers
                 OrderRow = newOrder
             }));
             
-            
-            
-            //// Add orderRow to DbContext
-            //_context.OrderRowIngredients.AddRange(orderRowIngredients);
-            //_context.SaveChanges();
+            SessionService.Save(HttpContext, orderRowIngredients);
 
             return RedirectToAction("CartPartial", "Home");
+        }
+        /// <summary>
+        /// Draft method. Save cart values stored in session to DB, and clear session
+        /// </summary>
+        public void PlaceOrder()
+        {
+            var order = SessionService.LoadOrderRows(HttpContext);
+            _context.OrderRows.AddRange(order);
+            var ori = SessionService.LoadOrderRowIngredients(HttpContext);
+            _context.OrderRowIngredients.AddRange(ori);
+
+            _context.SaveChanges();
+
+            SessionService.ClearAll(HttpContext);
         }
     }
 }
