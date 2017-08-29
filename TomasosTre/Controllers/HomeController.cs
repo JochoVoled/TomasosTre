@@ -27,7 +27,7 @@ namespace TomasosTre.Controllers
         public IActionResult Index()
         {
             // Set up page
-            var Model = new IndexViewModel {
+            var model = new IndexViewModel {
                 Cart = new CartViewModel(),
                 DishCustomization = new ViewModels.DishCustomizationViewModel()
             };
@@ -36,10 +36,10 @@ namespace TomasosTre.Controllers
             if (HttpContext.Session.GetString("Order") != null)
             {
                 string str = HttpContext.Session.GetString("Order");
-                Model.Cart.OrderRows = JsonConvert.DeserializeObject<List<OrderRow>>(str);
+                model.Cart.OrderRows = JsonConvert.DeserializeObject<List<OrderRow>>(str);
             }
-            Model.Cart.OrderRows.ForEach(x => Model.Cart.PriceSum += (x.Dish.Price * x.Amount));
-            return View(Model);
+            model.Cart.OrderRows.ForEach(x => model.Cart.PriceSum += (x.Dish.Price * x.Amount));
+            return View(model);
         }
 
         /// <summary>
@@ -48,23 +48,23 @@ namespace TomasosTre.Controllers
         /// <returns>The Cart partial view</returns>
         public IActionResult CartPartial()
         {
-            var CartModel = new CartViewModel();
+            var cartModel = new CartViewModel();
 
-            CartModel.OrderRows = SessionService.Load(HttpContext);
-            CartModel.OrderRows.ForEach(x => CartModel.PriceSum += (x.Dish.Price * x.Amount));
-            return PartialView("Partial/_Cart",CartModel);
+            cartModel.OrderRows = SessionService.Load(HttpContext);
+            cartModel.OrderRows.ForEach(x => cartModel.PriceSum += (x.Dish.Price * x.Amount));
+            return PartialView("Partial/_Cart",cartModel);
         }
 
         public IActionResult DishCustomizePartial(int id)
         {
             var allIngredients = _context.Ingredients.ToList();
-            var dish = _context.Dishes.FirstOrDefault(x => x.Id == id);
+            Dish dish = _context.Dishes.FirstOrDefault(x => x.Id == id);
             if (dish == null)
             {
                 // Return BadRequest response code (401?)
                 
             }
-            var dishIngredients = _context.DishIngredientcses.Where(x => x.DishId == id).ToList();
+            //var dishIngredients = _context.DishIngredientcses.Where(x => x.DishId == id).ToList();
             var model = new ViewModels.DishCustomizationViewModel{
                 Dish = dish
             };
