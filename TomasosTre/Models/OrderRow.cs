@@ -1,4 +1,6 @@
-﻿namespace TomasosTre.Models
+﻿using System.Collections.Generic;
+
+namespace TomasosTre.Models
 {
     public class OrderRow
     {
@@ -9,5 +11,6 @@
 
         public Dish Dish { get; set; }
         public Order Order { get; set; }
+        public List<OrderRowIngredient> OrderRowIngredient { get; set; }
     }
 }
