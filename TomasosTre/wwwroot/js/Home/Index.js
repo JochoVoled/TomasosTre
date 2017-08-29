@@ -24,7 +24,6 @@
 function createOrderRowEvents() {
     $(".amount").on("change",function () {
         console.log($(this));
-        // BUGFIX: Find out why this event only fires once (jQuery shuts it down after execution, but why?)
         var dishId = $(this).data("dish");
         var amount = $(this).val();
         $.post("/Api/Set", { id: dishId, amount: amount }, function (response)
