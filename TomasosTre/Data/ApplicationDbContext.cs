@@ -37,7 +37,7 @@ namespace TomasosTre.Data
         // Set up DbSets
         public DbSet<Dish> Dishes { get; set; }
         public DbSet<Ingredient> Ingredients { get; set; }
-        public DbSet<DishIngredient> DishIngredientcses { get; set; }
+        public DbSet<DishIngredient> DishIngredients { get; set; }
         public DbSet<OrderRow> OrderRows { get; set; }
         public DbSet<OrderRowIngredient> OrderRowIngredients { get; set; }
         public DbSet<Order> Orders { get; set; }
