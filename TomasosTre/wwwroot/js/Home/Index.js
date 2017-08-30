@@ -84,6 +84,19 @@ function registerCheckoutEvents() {
         $.get('Home/Checkout', data, function (response)
         {
             $("#root").html(response);
+            setupCheckout();
+        });
+    });
+}
+
+function setupCheckout() {order
+    $("#order").on("click", function () {
+        var isRegistering = false;
+        $.get('Api/PlaceOrder', data, function (response) {
+            $("#register").html(response);
+            if (isRegistering) {
+                setupCheckout();
+            }            
         });
     });
 }
