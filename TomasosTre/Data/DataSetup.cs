@@ -37,9 +37,9 @@ namespace TomasosTre.Data
             Save(context);
 
             // Set up all relationship tables
-            if (!context.DishIngredientcses.Any())
+            if (!context.DishIngredients.Any())
             {
-                context.DishIngredientcses.AddRange(
+                context.DishIngredients.AddRange(
                     new DishIngredient { Dish = context.Dishes.First(x => x.Name == "Capricciosa"), Ingredient = context.Ingredients.First(x => x.Name == "Cheese") },
                     new DishIngredient { Dish = context.Dishes.First(x => x.Name == "Capricciosa"), Ingredient = context.Ingredients.First(x => x.Name == "Tomato") },
                     new DishIngredient { Dish = context.Dishes.First(x => x.Name == "Margaritha"), Ingredient = context.Ingredients.First(x => x.Name == "Cheese") },

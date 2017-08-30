@@ -19,11 +19,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Scripts\Home\" />
+    <None Include="wwwroot\js\Home\Index.js" />
+    <None Include="wwwroot\js\LiveFilter.js" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="wwwroot\js\LiveFilter.js" />
+    <Folder Include="Scripts\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="wwwroot\js\select2.min.js">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

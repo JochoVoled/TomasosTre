@@ -1,0 +1,37 @@
+﻿@{
+}
+@model TomasosTre.ViewModels.DishCustomizationViewModel
+
+<div class="modal-content">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        @if (Model.Dish != null)
+        {
+            <h4 id="title" data-dish="@Model.Dish.Id" class="modal-title">Customize this @Model.Dish.Name</h4>
+        }
+    </div>
+    <div class="modal-body">
+    @if (Model.DishIngredients != null)
+    {
+        
+        @foreach (var item in Model.DishIngredients)
+        {
+            <div>
+                <span>@item.Name</span>
+                @if (item.IsChecked)
+                {
+                <input name="ingredient" type="checkbox" data-dish="@item.Id" checked />
+                }
+                else
+                {
+                <input name="ingredient" type="checkbox" data-dish="@item.Id"/>
+                }
+            </div>
+        }
+    }
+    </div>
+    <div class="modal-footer">
+        <button id="dish-customize" type="button" class="btn btn-primary" data-dish="dishId">Apply</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+    </div>
+</div>

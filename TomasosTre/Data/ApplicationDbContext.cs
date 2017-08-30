@@ -16,11 +16,17 @@ namespace TomasosTre.Data
             // Set DB keys, including composite keys
             // Set keys
             builder.Entity<DishIngredient>().HasKey(di => new { di.DishId, di.IngredientId });
+            builder.Entity<OrderRowIngredient>().HasKey(di => new { di.OrderRowId, di.IngredientId });
             // Set composite keys
             builder.Entity<DishIngredient>().HasOne(di => di.Dish).WithMany(di => di.DishIngredients)
                 .HasForeignKey(di => di.DishId);
             builder.Entity<DishIngredient>().HasOne(di => di.Ingredient).WithMany(di => di.DishIngredients)
                 .HasForeignKey(di => di.IngredientId);
+            builder.Entity<OrderRowIngredient>().HasOne(di => di.OrderRow).WithMany(di => di.OrderRowIngredient)
+                .HasForeignKey(di => di.OrderRowId);
+            builder.Entity<OrderRowIngredient>().HasOne(di => di.Ingredient).WithMany(di => di.OrderRowIngredient)
+                .HasForeignKey(di => di.IngredientId);
+
 
             base.OnModelCreating(builder);
             // Customize the ASP.NET Identity model and override the defaults if needed.
@@ -31,6 +37,9 @@ namespace TomasosTre.Data
         // Set up DbSets
         public DbSet<Dish> Dishes { get; set; }
         public DbSet<Ingredient> Ingredients { get; set; }
-        public DbSet<DishIngredient> DishIngredientcses { get; set; }
+        public DbSet<DishIngredient> DishIngredients { get; set; }
+        public DbSet<OrderRow> OrderRows { get; set; }
+        public DbSet<OrderRowIngredient> OrderRowIngredients { get; set; }
+        public DbSet<Order> Orders { get; set; }
     }
 }
