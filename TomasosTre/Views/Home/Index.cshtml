@@ -3,19 +3,20 @@
 }
 @using Microsoft.AspNetCore.Mvc.Rendering
 @model TomasosTre.ViewModels.Home.IndexViewModel
-
 @* Search menu *@
-<div class="col-sm-12" id="menuSearch">
-    <label>Menu</label>
-    <select class="js-example-data-array col-md-12"></select>
-</div>
-<div class="col-sm-12" id="cart">
-    @Html.Partial("Partial/_Cart", Model.Cart)
-</div>
+<div id="root">
+    <div class="col-sm-12" id="menuSearch">
+        <label>Menu</label>
+        <select class="js-example-data-array col-md-12"></select>
+    </div>
+    <div class="col-sm-12" id="cart">
+        @Html.Partial("Partial/_Cart", Model.Cart)
+    </div>
 
-<div id="dish-customizer" class="modal fade" role="dialog">
-    <div id="dish-customizer-target" class="modal-dialog">
-        @Html.Partial("Partial/_DishCustomizer", Model.DishCustomization)
+    <div id="dish-customizer" class="modal fade" role="dialog">
+        <div id="dish-customizer-target" class="modal-dialog">
+            @Html.Partial("Partial/_DishCustomizer", Model.DishCustomization)
+        </div>
     </div>
 </div>
 @section Scripts {

@@ -19,18 +19,18 @@
     if ($(".amount")) {
         createOrderRowEvents();
     }
+
 });
 
 function createOrderRowEvents() {
     $(".amount").on("change",function () {
-        console.log($(this));
-        // BUGFIX: Find out why this event only fires once (jQuery shuts it down after execution, but why?)
+        //console.log($(this));
         var dishId = $(this).data("dish");
         var amount = $(this).val();
         $.post("/Api/Set", { id: dishId, amount: amount }, function (response)
         {
             // debug line.
-            console.log("Post returned" + response);
+            //console.log("Post returned" + response);
             $("#cart").html(response);
             createOrderRowEvents();
         });
@@ -51,12 +51,13 @@ function createOrderRowEvents() {
             createOrderRowEvents();
         });
     });
+    registerCheckoutEvents();
 }
 
 function registerCustomDishEvents() {
     $("#dish-customize").on("click", function ()
     {
-        console.log("Howdy there");
+        //console.log("Howdy there");
         var data = {
             baseDishId: "",
             isOrderedIngredients: []
@@ -69,7 +70,33 @@ function registerCustomDishEvents() {
         });
         $.post("/Api/CustomizedDish", data, function (response)
         {
-            console.log(response);
+            $('#dish-customizer').modal('hide');
+            $("#cart").html(response);
+            createOrderRowEvents();
+        });
+    });
+}
+
+function registerCheckoutEvents() {
+    $("#checkout").on("click", function ()
+    {
+        var data = {};
+        $.get('Home/Checkout', data, function (response)
+        {
+            $("#root").html(response);
+            setupCheckout();
+        });
+    });
+}
+
+function setupCheckout() {order
+    $("#order").on("click", function () {
+        var isRegistering = false;
+        $.get('Api/PlaceOrder', data, function (response) {
+            $("#register").html(response);
+            if (isRegistering) {
+                setupCheckout();
+            }            
         });
     });
 }

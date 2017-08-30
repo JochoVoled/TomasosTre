@@ -5,3 +5,6 @@ if (window.location.hostname.indexOf('localhost') === -1) {
 } else {
     baseUrl = window.location.hostname;
 }
+$().ready(function () {
+    $('[data-toggle="tooltip"]').tooltip();
+});

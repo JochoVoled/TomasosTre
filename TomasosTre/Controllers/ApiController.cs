@@ -7,7 +7,7 @@ using TomasosTre.Services;
 
 namespace TomasosTre.Controllers
 {
-    // TODO Move most methods here to services, create an API Controller that directs to services for future cases like these
+    /// <inheritdoc />
     /// <summary>
     /// Takes calls from front-end and re-routes to services
     /// </summary>
@@ -25,10 +25,11 @@ namespace TomasosTre.Controllers
         /// </summary>
         /// <param name="id">The Id of the Dish being added</param>
         /// <returns>Re-directs to the CartPartial</returns>
+        //[HttpPut]
         public IActionResult Add(int id)
         {
             Dish option = _context.Dishes.First(dish => dish.Id == id);
-            List<OrderRow> order = SessionService.Load(HttpContext);
+            List<OrderRow> order = SessionService.LoadOrderRows(HttpContext);
             OrderRow row = order.SingleOrDefault(or => or.DishId == option.Id);
             if (row != null)
             {
@@ -55,9 +56,10 @@ namespace TomasosTre.Controllers
         /// </summary>
         /// <param name="id">The Id of the Dish to remove</param>
         /// <returns>Re-directs to the CartPartial</returns>
+        //[HttpDelete]
         public IActionResult Remove(int id)
         {
-            List<OrderRow> order = SessionService.Load(HttpContext);
+            List<OrderRow> order = SessionService.LoadOrderRows(HttpContext);
             OrderRow remove = order.Find(o => o.DishId == id);
 
             order.Remove(remove);
@@ -71,9 +73,10 @@ namespace TomasosTre.Controllers
         /// <param name="id">The Id of the dish whose ordered amount to change</param>
         /// <param name="amount">The new amount</param>
         /// <returns>Re-directs to the CartPartial</returns>
+        //[HttpPatch]
         public IActionResult Set(int id, int amount)
         {
-            List<OrderRow> order = SessionService.Load(HttpContext);
+            List<OrderRow> order = SessionService.LoadOrderRows(HttpContext);
             OrderRow update = order.Find(o => o.DishId == id);
 
             update.Amount = amount;
@@ -81,38 +84,64 @@ namespace TomasosTre.Controllers
             SessionService.Save(HttpContext,order);
             return RedirectToAction("CartPartial", "Home");
         }
+        /// <summary>
+        /// Save a custom dish to session variables
+        /// </summary>
+        /// <param name="baseDishId">Id of the dish being customized</param>
+        /// <param name="isOrderedIngredients">List of selected ingredient IDs</param>
+        /// <returns>The CartPartial partial view</returns>
         public IActionResult CustomizedDish(int baseDishId, List<int> isOrderedIngredients)
         {
-            // Find the baseDish
             Dish option = _context.Dishes.First(dish => dish.Id == baseDishId);
-            // Get a list of all its ingredients (A)
-            var optionIngredients = _context.DishIngredientcses.Where(x => x.DishId == baseDishId).Select(x => x.Ingredient).ToList();
-            // Get a list the ordered ingredients (B)
+            var optionIngredients = _context.DishIngredients.Where(x => x.DishId == baseDishId).Select(x => x.Ingredient).ToList();
             List<Ingredient> orderedIngredients = new List<Ingredient>();
-            isOrderedIngredients.ForEach(x => orderedIngredients.Add(_context.Ingredients.First(y => y.Id == x)));
 
-            /* Match A and B
-                If item of A is not in B, the customer has de-selected an ingredient
-                If item of B is not in A, the customer has added an extra ingredient
-                Code for that found through https://stackoverflow.com/questions/3739246/linq-to-sql-not-contains-or-not-in#3740255 */
-            //IEnumerable<Ingredient> hasDeselected = optionIngredients.Where(x => !orderedIngredients.Select(y => y.Id).Contains(x.Id)).ToList();
+            isOrderedIngredients.ForEach(x => orderedIngredients.Add(_context.Ingredients.First(y => y.Id == x)));
             IEnumerable<Ingredient> hasDeselected = optionIngredients.Except(orderedIngredients).ToList();
-            //IEnumerable<Ingredient> hasAdded = orderedIngredients.Where(x => !optionIngredients.Select(y => y.Id).Contains(x.Id)).ToList();
-            IEnumerable<Ingredient> hasAdded = orderedIngredients.Except(optionIngredients);
+            IEnumerable<Ingredient> hasAdded = orderedIngredients.Except(optionIngredients).ToList();
 
             // Create a new dish, to connect this instance to the differing ingredients
-            //var order = SessionService.Load(HttpContext);
+            var order = SessionService.LoadOrderRows(HttpContext);
+
+            // Remove one occurence of base dish
+            if (order.Find(x => x.DishId == baseDishId).Amount == 1)
+            {
+                Remove(baseDishId);
+            }
+            else
+            {
+                order.Find(x => x.DishId == baseDishId).Amount -= 1;
+            }
+            
+            // Set up a new Dish
+            var newDish = new Dish
+            {
+                Price = option.Price,
+                Name = $"Custom {option.Name}",
+                DishIngredients = new List<DishIngredient>()
+            };
+            var newIngredients = optionIngredients.Except(hasDeselected).ToList().Union(hasAdded).ToList();
+            newIngredients.ForEach(x => newDish.DishIngredients.Add(new DishIngredient
+            {
+                DishId = newDish.Id,
+                IngredientId = x.Id
+            }));
             var newOrder = new OrderRow
             {
-                Dish = option,
+                DishId = newDish.Id,
+                Dish = newDish,
                 Amount = 1,
+                
             };
-            // TODO Should save this new orderRow to context.OrderRows, or to session variable
-            //order.Add(newOrder);
-            //SessionService.Save(HttpContext,order);
+
+            // Add it to the table, if it's a new combination of ingredients
+            if (IsDishNew(newDish))
+            {
+                _context.Dishes.Add(newDish);
+            }
+            order.Add(newOrder);
 
             // Set up the diffs in a second session variable, noting if its extra or removed
-            // TODO Should be able to simplify this to an _context.OrderRowIngredients.AddRange(firstrow, secondrow), if I get access
             var orderRowIngredients = hasDeselected.Select(ingredient => new OrderRowIngredient
             {
                 Ingredient = ingredient,
@@ -132,14 +161,56 @@ namespace TomasosTre.Controllers
                 OrderRowId = newOrder.OrderRowId,
                 OrderRow = newOrder
             }));
-            
-            
-            
-            //// Add orderRow to DbContext
-            //_context.OrderRowIngredients.AddRange(orderRowIngredients);
-            //_context.SaveChanges();
+            SessionService.Save(HttpContext, orderRowIngredients);
 
+            // Modify price
+            foreach (var addedIngredient in hasAdded.Except(optionIngredients))
+            {
+                newOrder.Dish.Price += addedIngredient.Price;
+            }
+            foreach (var removeIngredient in hasDeselected.Except(optionIngredients))
+            {
+                newOrder.Dish.Price -= removeIngredient.Price;
+            }
+            SessionService.Save(HttpContext, order);
             return RedirectToAction("CartPartial", "Home");
+        }
+
+        private bool IsDishNew(Dish newDish)
+        {
+            // All customized X are called "custom X", so filter that first for performance
+            var filtered = _context.Dishes.Where(x => x.Name == newDish.Name).ToList();
+            if (!filtered.Any())
+            {
+                return true;
+            }
+            // Check if any dish has the same - no more, no less - ingredants as the new dish.
+            foreach (var dish in filtered)
+            {
+                // A except B, and B except A, can only be equal if A = B
+                var equals = dish.DishIngredients.Except(newDish.DishIngredients) == newDish.DishIngredients.Except(dish.DishIngredients);
+                if (equals)
+                {
+                    return false;
+                }
+            }
+            // if no Dishes remain, there are no duplicates; Dish is new
+            return true;
+        }
+
+        /// <summary>
+        /// Draft method. Save cart values stored in session to DB, and clear session
+        /// </summary>
+        public void PlaceOrder()
+        {
+            var order = SessionService.LoadOrderRows(HttpContext);
+            _context.OrderRows.AddRange(order);
+            var ori = SessionService.LoadOrderRowIngredients(HttpContext);
+            _context.OrderRowIngredients.AddRange(ori);
+
+            _context.SaveChanges();
+
+            SessionService.ClearAll(HttpContext);
         }
     }
 }

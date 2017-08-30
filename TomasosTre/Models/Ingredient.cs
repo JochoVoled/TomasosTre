@@ -9,5 +9,6 @@ namespace TomasosTre.Models
         public decimal Price { get; set; }
 
         public List<DishIngredient> DishIngredients { get; set; }
+        public List<OrderRowIngredient> OrderRowIngredient { get; set; }
     }
 }
