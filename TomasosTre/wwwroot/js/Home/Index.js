@@ -68,7 +68,9 @@ function registerCustomDishEvents() {
         });
         $.post("/Api/CustomizedDish", data, function (response)
         {
-            console.log(response);
+            $('#dish-customizer').modal('hide');
+            $("#cart").html(response);
+            createOrderRowEvents();
         });
     });
 }
