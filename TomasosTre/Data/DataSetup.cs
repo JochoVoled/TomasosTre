@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Linq;
 using TomasosTre.Models;
 
 namespace TomasosTre.Data
@@ -26,9 +23,11 @@ namespace TomasosTre.Data
             if (!context.Ingredients.Any())
             {
                 context.Ingredients.AddRange(
-                    new Ingredient { Name = "Cheese" },
-                    new Ingredient { Name = "Tomato" },
-                    new Ingredient { Name = "Ham" }
+                    new Ingredient { Name = "Champignon", Price = 5m},
+                    new Ingredient { Name = "Mozarella", Price = 15m},
+                    new Ingredient { Name = "Basil", Price = 10m },
+                    new Ingredient { Name = "Pineapple", Price = 10m},
+                    new Ingredient { Name = "Ham", Price = 5m}
                 );
                 Clean = false;
             }
@@ -40,11 +39,12 @@ namespace TomasosTre.Data
             if (!context.DishIngredients.Any())
             {
                 context.DishIngredients.AddRange(
-                    new DishIngredient { Dish = context.Dishes.First(x => x.Name == "Capricciosa"), Ingredient = context.Ingredients.First(x => x.Name == "Cheese") },
-                    new DishIngredient { Dish = context.Dishes.First(x => x.Name == "Capricciosa"), Ingredient = context.Ingredients.First(x => x.Name == "Tomato") },
-                    new DishIngredient { Dish = context.Dishes.First(x => x.Name == "Margaritha"), Ingredient = context.Ingredients.First(x => x.Name == "Cheese") },
-                    new DishIngredient { Dish = context.Dishes.First(x => x.Name == "Margaritha"), Ingredient = context.Ingredients.First(x => x.Name == "Tomato") },
-                    new DishIngredient { Dish = context.Dishes.First(x => x.Name == "Hawaii"), Ingredient = context.Ingredients.First(x => x.Name == "Tomato") }
+                    new DishIngredient { Dish = context.Dishes.First(x => x.Name == "Capricciosa"), Ingredient = context.Ingredients.First(x => x.Name == "Champignon") },
+                    new DishIngredient { Dish = context.Dishes.First(x => x.Name == "Capricciosa"), Ingredient = context.Ingredients.First(x => x.Name == "Ham") },
+                    new DishIngredient { Dish = context.Dishes.First(x => x.Name == "Margaritha"), Ingredient = context.Ingredients.First(x => x.Name == "Basil") },
+                    new DishIngredient { Dish = context.Dishes.First(x => x.Name == "Margaritha"), Ingredient = context.Ingredients.First(x => x.Name == "Mozarella") },
+                    new DishIngredient { Dish = context.Dishes.First(x => x.Name == "Hawaii"), Ingredient = context.Ingredients.First(x => x.Name == "Pineapple") },
+                new DishIngredient { Dish = context.Dishes.First(x => x.Name == "Hawaii"), Ingredient = context.Ingredients.First(x => x.Name == "Ham") }
                 );
                 Clean = false;
             }
