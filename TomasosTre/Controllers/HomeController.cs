@@ -42,12 +42,6 @@ namespace TomasosTre.Controllers
             return View(model);
         }
 
-        public IActionResult Checkout()
-        {
-
-            return PartialView("_Checkout");
-        }
-
         /// <summary>
         /// Sets up the cart div
         /// </summary>
