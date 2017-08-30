@@ -4,11 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 using TomasosTre.Models;
 using TomasosTre.Data;
 using TomasosTre.Services;
-using System;
 
 namespace TomasosTre.Controllers
 {
-    // TODO Move most methods here to services, create an API Controller that directs to services for future cases like these
     /// <inheritdoc />
     /// <summary>
     /// Takes calls from front-end and re-routes to services
