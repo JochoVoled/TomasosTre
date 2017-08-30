@@ -10,6 +10,6 @@ namespace TomasosTre.Models
         public int CustomerId { get; set; }
         public bool IsDelivered { get; set; }
 
-        //public Customer Customer { get; set; }
+        public Customer Customer { get; set; }
     }
 }
