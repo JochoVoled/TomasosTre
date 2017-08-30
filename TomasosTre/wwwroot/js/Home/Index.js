@@ -19,17 +19,18 @@
     if ($(".amount")) {
         createOrderRowEvents();
     }
+
 });
 
 function createOrderRowEvents() {
     $(".amount").on("change",function () {
-        console.log($(this));
+        //console.log($(this));
         var dishId = $(this).data("dish");
         var amount = $(this).val();
         $.post("/Api/Set", { id: dishId, amount: amount }, function (response)
         {
             // debug line.
-            console.log("Post returned" + response);
+            //console.log("Post returned" + response);
             $("#cart").html(response);
             createOrderRowEvents();
         });
@@ -50,12 +51,13 @@ function createOrderRowEvents() {
             createOrderRowEvents();
         });
     });
+    registerCheckoutEvents();
 }
 
 function registerCustomDishEvents() {
     $("#dish-customize").on("click", function ()
     {
-        console.log("Howdy there");
+        //console.log("Howdy there");
         var data = {
             baseDishId: "",
             isOrderedIngredients: []
@@ -71,6 +73,17 @@ function registerCustomDishEvents() {
             $('#dish-customizer').modal('hide');
             $("#cart").html(response);
             createOrderRowEvents();
+        });
+    });
+}
+
+function registerCheckoutEvents() {
+    $("#checkout").on("click", function ()
+    {
+        var data = {};
+        $.get('Home/Checkout', data, function (response)
+        {
+            $("#root").html(response);
         });
     });
 }

@@ -42,6 +42,12 @@ namespace TomasosTre.Controllers
             return View(model);
         }
 
+        public IActionResult Checkout()
+        {
+
+            return PartialView("_Checkout");
+        }
+
         /// <summary>
         /// Sets up the cart div
         /// </summary>
@@ -63,7 +69,6 @@ namespace TomasosTre.Controllers
                 // Return BadRequest response code (401?)
                 
             }
-            //var dishIngredients = _context.DishIngredientcses.Where(x => x.DishId == id).ToList();
             var model = new ViewModels.DishCustomizationViewModel{
                 Dish = dish
             };

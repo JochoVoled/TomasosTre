@@ -41,10 +41,10 @@ else
     <input class="form-control" type="text" disabled value="@Model.PriceSum SEK">
 </div>
 @if (Model.PriceSum == 0)
-        {
+{
     <button class="t3-checkout btn btn-primary" disabled>Checkout</button>
 }
 else
 {
-    <button class="t3-checkout btn btn-primary">Checkout</button>
+    <button id="checkout" class="t3-checkout btn btn-primary">Checkout</button>
 }
