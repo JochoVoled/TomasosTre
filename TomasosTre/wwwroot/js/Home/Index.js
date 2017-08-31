@@ -9,7 +9,6 @@
             var val = $(".js-example-data-array").val();
             $.post('/Api/Add', { id: val }, function (response)
             {
-                //console.log("Post returned" + response);
                 $("#cart").html(response);
                 createOrderRowEvents();
             });
@@ -30,7 +29,6 @@ function createOrderRowEvents() {
         $.post("/Api/Set", { id: dishId, amount: amount }, function (response)
         {
             // debug line.
-            //console.log("Post returned" + response);
             $("#cart").html(response);
             createOrderRowEvents();
         });
@@ -57,7 +55,6 @@ function createOrderRowEvents() {
 function registerCustomDishEvents() {
     $("#dish-customize").on("click", function ()
     {
-        //console.log("Howdy there");
         var data = {
             baseDishId: "",
             isOrderedIngredients: []
@@ -81,7 +78,7 @@ function registerCheckoutEvents() {
     $("#checkout").on("click", function ()
     {
         var data = {};
-        $.get('Home/Checkout', data, function (response)
+        $.get('Home/CheckoutPartial', data, function (response)
         {
             $("#root").html(response);
             setupCheckout();
@@ -89,12 +86,18 @@ function registerCheckoutEvents() {
     });
 }
 
-function setupCheckout() {order
-    $("#order").on("click", function () {
-        var isRegistering = false;
+function setupCheckout() {
+    $("#order").on("click", function() {
+        var data = {
+            CardNumber: $("#card-number").val(),
+            SecurityNumber: $("#security-number").val(),
+            IsRegistrating: $("#isRegistrating").checked
+        };
+        
+
         $.get('Api/PlaceOrder', data, function (response) {
             $("#register").html(response);
-            if (isRegistering) {
+            if (data.IsRegistrating) {
                 setupCheckout();
             }            
         });

@@ -7,17 +7,23 @@ using TomasosTre.ViewModels.Home;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Identity;
 using TomasosTre.Services;
+using TomasosTre.ViewModels;
 
 namespace TomasosTre.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
 
-        public HomeController(ApplicationDbContext context)
+        public HomeController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
         {
             _context = context;
+            _userManager = userManager;
+            _signInManager = signInManager;
         }
         
         /// <summary>
@@ -29,7 +35,7 @@ namespace TomasosTre.Controllers
             // Set up page
             var model = new IndexViewModel {
                 Cart = new CartViewModel(),
-                DishCustomization = new ViewModels.DishCustomizationViewModel()
+                DishCustomization = new DishCustomizationViewModel()
             };
             
             // If user is returning from a non-finished purchase
@@ -63,13 +69,13 @@ namespace TomasosTre.Controllers
                 // Return BadRequest response code (401?)
                 
             }
-            var model = new ViewModels.DishCustomizationViewModel{
+            var model = new DishCustomizationViewModel{
                 Dish = dish
             };
             foreach (var i in allIngredients)
             {
                 var isChecked = _context.DishIngredients.Where(d => d.DishId == dish.Id).FirstOrDefault(di => di.IngredientId == i.Id) != null;
-                model.DishIngredients.Add(new ViewModels.DishCustomizationStruct
+                model.DishIngredients.Add(new DishCustomizationStruct
                 {
                     Id = i.Id,
                     Name = i.Name,
@@ -79,6 +85,24 @@ namespace TomasosTre.Controllers
             }
 
             return PartialView("Partial/_DishCustomizer", model);
+        }
+
+        public IActionResult CheckoutPartial()
+        {
+            CheckoutViewModel data = SessionService.LoadCheckout(HttpContext);
+            ApplicationUser user = new ApplicationUser();
+            if (_signInManager.IsSignedIn(User))
+            {
+                user = _userManager.GetUserAsync(User).Result;
+            }
+            var model = new CheckoutViewModel
+            {
+                Address = user?.Address ?? data.Address,
+                City = user?.City ?? data.City,
+                Email = user?.Email ?? data.Email,
+                Zip = user?.Zip ?? data.Zip,
+            };
+            return PartialView("_Checkout",model);
         }
 
         public IActionResult Error()
