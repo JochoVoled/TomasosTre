@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using TomasosTre.Models;
+using TomasosTre.ViewModels;
 
 namespace TomasosTre.Services
 {
@@ -29,6 +30,11 @@ namespace TomasosTre.Services
         {
             var serializedValue = JsonConvert.SerializeObject(ori, new JsonSerializerSettings{ReferenceLoopHandling = ReferenceLoopHandling.Ignore});
             httpContext.Session.SetString("ORI", serializedValue);
+        }
+        public static void Save(HttpContext httpContext, CheckoutViewModel checkout)
+        {
+            var serializedValue = JsonConvert.SerializeObject(checkout, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore });
+            httpContext.Session.SetString("Checkout", serializedValue);
         }
         #endregion
 
@@ -75,7 +81,21 @@ namespace TomasosTre.Services
 
             return order;
         }
+        public static CheckoutViewModel LoadCheckout(HttpContext httpContext)
+        {
+            CheckoutViewModel data;
+            if (httpContext.Session.GetString("Checkout") == null)
+            {
+                data = new CheckoutViewModel();
+            }
+            else
+            {
+                var str = httpContext.Session.GetString("Checkout");
+                data = JsonConvert.DeserializeObject<CheckoutViewModel>(str);
+            }
 
+            return data;
+        }
         #endregion
 
         #region Clear Methods
@@ -107,6 +127,10 @@ namespace TomasosTre.Services
         public static void Clear(HttpContext httpContext, List<OrderRowIngredient> ori)
         {
             httpContext.Session.SetString("ORI", "");
+        }
+        public static void Clear(HttpContext httpContext, CheckoutViewModel checkout)
+        {
+            httpContext.Session.SetString("Checkout", "");
         }
         #endregion
     }
