@@ -7,9 +7,9 @@ namespace TomasosTre.Models
         public int Id { get; set; }
         public DateTime Date { get; set; }
         public decimal Price { get; set; }
-        public int CustomerId { get; set; }
+        public int ApplicationUserId { get; set; }
         public bool IsDelivered { get; set; }
 
-        public Customer Customer { get; set; }
+        public ApplicationUser Customer { get; set; }
     }
 }
