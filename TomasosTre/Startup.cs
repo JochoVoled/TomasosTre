@@ -40,7 +40,7 @@ namespace TomasosTre
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ApplicationDbContext context)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ApplicationDbContext context, RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager)
         {
             if (env.IsDevelopment())
             {
@@ -65,7 +65,7 @@ namespace TomasosTre
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
 
-            DataSetup.Setup(context);
+            DataSetup.Setup(context, userManager,roleManager);
         }
     }
 }
