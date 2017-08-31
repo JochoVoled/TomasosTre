@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using Microsoft.AspNetCore.Identity;
 using TomasosTre.Models;
 
@@ -16,6 +15,10 @@ namespace TomasosTre.Data
             // Set up all storange tables
             if (!context.Dishes.Any())
             {
+                context.Categories.AddRange(
+                    new Category{ Name = "Pizza"}
+                    );
+
                 context.Dishes.AddRange(
                     new Dish { Name = "Capricciosa", Price = 79 },
                     new Dish { Name = "Margaritha", Price = 69 },
