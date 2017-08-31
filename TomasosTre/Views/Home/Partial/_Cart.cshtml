@@ -7,7 +7,7 @@
 }
 else
 {
-    @foreach (var dish in Model.OrderRows)
+    foreach (var dish in Model.OrderRows)
     {
         <div class="form-horizontal t3-order-row" style="margin: 10px 0">
             <span class="col-xs-4">@dish.Dish.Name</span>
