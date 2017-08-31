@@ -9,7 +9,6 @@
             var val = $(".js-example-data-array").val();
             $.post('/Api/Add', { id: val }, function (response)
             {
-                //console.log("Post returned" + response);
                 $("#cart").html(response);
                 createOrderRowEvents();
             });
@@ -19,17 +18,17 @@
     if ($(".amount")) {
         createOrderRowEvents();
     }
+
 });
 
 function createOrderRowEvents() {
     $(".amount").on("change",function () {
-        console.log($(this));
+        //console.log($(this));
         var dishId = $(this).data("dish");
         var amount = $(this).val();
         $.post("/Api/Set", { id: dishId, amount: amount }, function (response)
         {
             // debug line.
-            console.log("Post returned" + response);
             $("#cart").html(response);
             createOrderRowEvents();
         });
@@ -50,12 +49,12 @@ function createOrderRowEvents() {
             createOrderRowEvents();
         });
     });
+    registerCheckoutEvents();
 }
 
 function registerCustomDishEvents() {
     $("#dish-customize").on("click", function ()
     {
-        console.log("Howdy there");
         var data = {
             baseDishId: "",
             isOrderedIngredients: []
@@ -68,7 +67,39 @@ function registerCustomDishEvents() {
         });
         $.post("/Api/CustomizedDish", data, function (response)
         {
-            console.log(response);
+            $('#dish-customizer').modal('hide');
+            $("#cart").html(response);
+            createOrderRowEvents();
+        });
+    });
+}
+
+function registerCheckoutEvents() {
+    $("#checkout").on("click", function ()
+    {
+        var data = {};
+        $.get('Home/CheckoutPartial', data, function (response)
+        {
+            $("#root").html(response);
+            setupCheckout();
+        });
+    });
+}
+
+function setupCheckout() {
+    $("#order").on("click", function() {
+        var data = {
+            CardNumber: $("#card-number").val(),
+            SecurityNumber: $("#security-number").val(),
+            IsRegistrating: $("#isRegistrating").checked
+        };
+        
+
+        $.get('Api/PlaceOrder', data, function (response) {
+            $("#register").html(response);
+            if (data.IsRegistrating) {
+                setupCheckout();
+            }            
         });
     });
 }

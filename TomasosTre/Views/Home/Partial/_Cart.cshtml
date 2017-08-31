@@ -7,14 +7,31 @@
 }
 else
 {
-    @foreach (var dish in Model.OrderRows)
+    foreach (var dish in Model.OrderRows)
     {
         <div class="form-horizontal t3-order-row" style="margin: 10px 0">
             <span class="col-xs-4">@dish.Dish.Name</span>
             <div class="col-xs-4">
-                <input class="amount form-control" data-dish="@dish.DishId" type="number" value="@dish.Amount" min="1" />
+                @* Disabling changing amounts of custom dishes, as doing so causes bugs I might fix later *@
+                @if (dish.Dish.Name.Contains("Custom"))
+                {
+                    <input class="amount form-control" data-dish="@dish.DishId" type="number" value="@dish.Amount" min="1" disabled/>
+                }
+                else
+                {
+                    <input class="amount form-control" data-dish="@dish.DishId" type="number" value="@dish.Amount" min="1"/>
+                }
+
             </div>
-            <button data-dish="@dish.DishId" class="edit btn t3-btn-warning" data-toggle="modal" data-target="#dish-customizer"><span class="glyphicon glyphicon-edit"></span></button>
+            @* Disabling changing ingredients of custom dishes, as doing so causes bugs I might fix later *@
+            @if (dish.Dish.Name.Contains("Custom"))
+            {
+                <button data-dish="@dish.DishId" class="edit btn t3-btn-warning" data-toggle="modal" data-target="#dish-customizer" disabled><span class="glyphicon glyphicon-edit"></span></button>
+            }
+            else
+            {
+                <button data-dish="@dish.DishId" class="edit btn t3-btn-warning" data-toggle="modal" data-target="#dish-customizer"><span class="glyphicon glyphicon-edit"></span></button>
+            }
             <button data-dish="@dish.DishId" class="remove btn t3-btn-danger"><span class="glyphicon glyphicon-remove"></span></button>
         </div>
     }
@@ -24,10 +41,10 @@ else
     <input class="form-control" type="text" disabled value="@Model.PriceSum SEK">
 </div>
 @if (Model.PriceSum == 0)
-        {
+{
     <button class="t3-checkout btn btn-primary" disabled>Checkout</button>
 }
 else
 {
-    <button class="t3-checkout btn btn-primary">Checkout</button>
+    <button id="checkout" class="t3-checkout btn btn-primary">Checkout</button>
 }
