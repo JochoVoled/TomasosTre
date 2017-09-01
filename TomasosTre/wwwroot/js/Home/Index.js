@@ -1,5 +1,5 @@
 ﻿$(document).ready(function () {
-    $.get('/Home/GetDishNames').then(function (response) {
+    $.get('/Api/GetDishNames').then(function (response) {
         $(".js-example-data-array").select2({
             placeholder: "Select a dish to order",
             data: response
@@ -35,7 +35,7 @@ function createOrderRowEvents() {
     });
     $(".edit").on("click", function() {
         // Open div with checkboxes that lets user customize dish
-        $.get("/Home/DishCustomizePartial", { id: $(this).data("dish") }, function(response) {
+        $.get("/Render/DishCustomizePartial", { id: $(this).data("dish") }, function(response) {
             $("#dish-customizer-target").html(response);
                 registerCustomDishEvents();
             }
@@ -78,10 +78,10 @@ function registerCheckoutEvents() {
     $("#checkout").on("click", function ()
     {
         var data = {};
-        $.get('Home/CheckoutPartial', data, function (response)
+        $.get('Render/CheckoutPartial', data, function (response)
         {
             $("#root").html(response);
-            setupCheckout();
+            //setupCheckout();
         });
     });
 }
@@ -91,9 +91,13 @@ function setupCheckout() {
         var data = {
             CardNumber: $("#card-number").val(),
             SecurityNumber: $("#security-number").val(),
+            ExpiryMonth: $("#expiry-month").val(),
+            Address: $("#address").val(),
+            Zip: $("#zip").val(),
+            City: $("#city").val(),
+            Email: $("#email").val(),
             IsRegistrating: $("#isRegistrating").checked
         };
-        
 
         $.get('Api/PlaceOrder', data, function (response) {
             $("#register").html(response);

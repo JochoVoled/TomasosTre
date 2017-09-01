@@ -10,16 +10,18 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Identity;
 using TomasosTre.Services;
 using TomasosTre.ViewModels;
+using TomasosTre.Extensions;
+using System;
 
 namespace TomasosTre.Controllers
 {
-    public class HomeController : Controller
+    public class RenderController : Controller
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
 
-        public HomeController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+        public RenderController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
         {
             _context = context;
             _userManager = userManager;
@@ -105,23 +107,50 @@ namespace TomasosTre.Controllers
             return PartialView("_Checkout",model);
         }
 
+        public IActionResult Order(CheckoutViewModel checkout)
+        {
+            // Last Validation
+            DateTime expires = checkout.ExpiryMonth.ToDateTime();
+            if (expires < DateTime.Now)
+            {
+                return RedirectToAction("CheckoutPartial");
+            }
+
+            // get and prepare data
+            var user = _userManager.GetUserAsync(User).Result;
+            var order = new Order
+            {
+                Date = DateTime.Now,
+                Customer = user,
+                ApplicationUserId = user.Id,
+                IsDelivered = false,
+            };
+            var orderRows = SessionService.LoadOrderRows(HttpContext);
+            var ori = SessionService.LoadOrderRowIngredients(HttpContext);
+
+            // connect all orderRows to new order
+            orderRows.ForEach(x => x.OrderId = order.Id);
+
+            // get price sum, if stored, or calculate sum from stored order rows
+            orderRows.ForEach(x => order.Price += x.Dish.Price * x.Amount);            
+            ori.ForEach(x => order.Price += x.IsExtra ? x.Ingredient.Price : 0);
+
+            // save readied order
+            _context.Orders.Add(order);
+            _context.OrderRows.AddRange(orderRows);
+            _context.OrderRowIngredients.AddRange(ori);
+            _context.SaveChanges();
+            SessionService.ClearAll(HttpContext);
+
+            if (checkout.IsRegistrating)
+                return RedirectToAction("Register", "Account", routeValues: "Home/Confirmation");
+            else
+                return View("Confirmation");            
+        }
+
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
-
-        /// <summary>
-        /// Fetches the names and Ids of Dishes to the select2 box
-        /// </summary>
-        /// <returns>An collection of anon objects with IDs and Names</returns>
-        public IActionResult GetDishNames()
-        {
-            var model = _context.Dishes.Select(x => new
-            {
-                id = x.Id,
-                text = x.Name
-            }).ToList();
-            return Json(model);
         }
     }
 }
