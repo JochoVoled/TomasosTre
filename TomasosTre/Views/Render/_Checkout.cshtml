@@ -1,0 +1,85 @@
+﻿@model TomasosTre.ViewModels.CheckoutViewModel
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@{
+    var today = DateTime.Now;
+}
+<h2>Checkout</h2>
+
+<form asp-action="Order" asp-controller="Render" method="post">
+    <div id="payment-credentials" style="margin-bottom: 15px">
+        <h3>
+            Payment credentials <span class="glyphicon glyphicon-question-sign" href="#" data-toggle="tooltip"
+                                      title="We will not store your card info. It is only used at your payment provider for the payment"></span>
+        </h3>
+        <div class="form-group">
+            <label id="card-number" class="col-sm-4 control-label" for="@Model.CardNumber">Card Number*</label>
+            <input class="col-sm-8 input-group" asp-for="@Model.CardNumber" required pattern="\d{4}\s?\d{4}\s?\d{4}\s?\d{4}"
+                   oninvalid="this.setCustomValidity('Please enter four groups of four numbers')" oninput="setCustomValidity('')"
+                   type="text" placeholder="e.g. 1234 1234 1234 1234" />
+        </div>
+        <div class="form-group">
+            <label id="security-number" class="col-sm-4 control-label" for="@Model.SecurityNumber">Security Number*</label>
+            <input class="col-sm-8 input-group" asp-for="@Model.SecurityNumber" required type="text" pattern="\d{3}" placeholder="e.g. 123"
+                   oninvalid="this.setCustomValidity('Please enter three numbers')" oninput="setCustomValidity('')" />
+        </div>
+        <div class="form-group">
+            <label id="expiry-month" class="col-sm-4 control-label" for="@Model.ExpiryMonth">Expiry Date*</label>
+            <input class="col-sm-8 input-group" asp-for="@Model.ExpiryMonth" required type="month" min="@today" placeholder="@today.Month @today.Year" />
+        </div>
+    </div>
+    @if (!SignInManager.IsSignedIn(User))
+    {
+        <a asp-controller="Account" asp-action="Login" style="float:right" class="login btn btn-success">Log in, skip this</a>
+        <div class="delivery-info">
+            <h3>
+                Delivery info <span class="glyphicon glyphicon-question-sign" href="#" data-toggle="tooltip"
+                                    title="This is required to send delivery to you, but is also stored on your browser to
+                                    simplify future, unrefistered, purchases"></span>
+            </h3>
+            <div class="form-group">
+                <label class="col-sm-4 control-label" for="@Model.Address">Address*</label>
+                <input id="address" asp-for="@Model.Address" class="col-sm-8 input-group" required type="text" placeholder="e.g. Bigstreet 1" value="@Model.Address" />
+            </div>
+            <div class="form-group">
+                <label class="col-sm-4 control-label" for="@Model.Zip">Zip*</label>
+                <input id="zip" asp-for="@Model.Zip" class="col-sm-8 input-group" required pattern="\d{5}"
+                       oninvalid="this.setCustomValidity('Please enter five numbers')" oninput="setCustomValidity('')"
+                       type="text" placeholder="e.g. 123 12" value="@Model.Zip" />
+            </div>
+            <div class="form-group">
+                <label class="col-sm-4 control-label" for="@Model.City">City*</label>
+                <input id="city" asp-for="@Model.City" class="col-sm-8 input-group" required type="text" placeholder="e.g. Springfield" value="@Model.City" />
+            </div>
+        </div>
+        <div id="contact-info">
+            <h3>Delivery info <span class="glyphicon glyphicon-question-sign" href="#" data-toggle="tooltip" title="This is all optional"></span></h3>
+            <div class="form-group">
+                <label class="col-sm-4 control-label" for="@Model.Phone">Phone number</label>
+                <input id="phone" asp-for="@Model.Phone" class="col-sm-8 input-group" type="text" pattern="[\d+-\s]+"
+                       oninvalid="this.setCustomValidity('Please only enter numbers, spaces, plus and minuses')" oninput="setCustomValidity('')"
+                       placeholder="e.g. 070-123 123 123" value="@Model.Phone" />
+            </div>
+            <div class="form-group">
+                <label class="col-sm-4 control-label" for="@Model.Email">E-Mail Address</label>
+                <input id="email" asp-for="@Model.Email" class="col-sm-8 input-group" type="email" placeholder="e.g. john.doe@example.com" value="@Model.Email" />
+            </div>
+        </div>
+        <div id="register">
+            <div class="form-group">
+                <label id="isRegistrating" class="control-label">Register and let me pass this step in the future</label>
+                <input class="" asp-for="@Model.IsRegistrating" type="checkbox" value="Register" />
+            </div>
+        </div>
+    }
+    else
+    {
+        <input id="address" asp-for="@Model.Address" type="hidden" value="@Model.Address" />
+        <input id="zip" asp-for="@Model.Zip" type="hidden" value="@Model.Zip" />
+        <input id="city" asp-for="@Model.City" type="hidden" value="@Model.City" />
+
+        <input id="phone" asp-for="@Model.Phone" type="hidden" value="@Model.Phone" />
+        <input id="email" asp-for="@Model.Email" type="hidden" value="@Model.Email" />
+    }
+    <button type="submit" id="order" style="float:right" class="btn btn-primary">Place order</button>
+</form>

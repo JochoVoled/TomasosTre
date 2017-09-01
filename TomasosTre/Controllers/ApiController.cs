@@ -48,7 +48,7 @@ namespace TomasosTre.Controllers
 
             SessionService.Save(HttpContext,order);
 
-            return RedirectToAction("CartPartial", "Home");
+            return RedirectToAction("CartPartial", "Render");
         }
 
         /// <summary>
@@ -65,7 +65,7 @@ namespace TomasosTre.Controllers
             order.Remove(remove);
 
             SessionService.Save(HttpContext,order);
-            return RedirectToAction("CartPartial", "Home");
+            return RedirectToAction("CartPartial", "Render");
         }
         /// <summary>
         /// Sets a new amount ordered of a Dish, based on its id
@@ -82,7 +82,7 @@ namespace TomasosTre.Controllers
             update.Amount = amount;
 
             SessionService.Save(HttpContext,order);
-            return RedirectToAction("CartPartial", "Home");
+            return RedirectToAction("CartPartial", "Render");
         }
         /// <summary>
         /// Save a custom dish to session variables
@@ -173,7 +173,7 @@ namespace TomasosTre.Controllers
                 newOrder.Dish.Price -= removeIngredient.Price;
             }
             SessionService.Save(HttpContext, order);
-            return RedirectToAction("CartPartial", "Home");
+            return RedirectToAction("CartPartial", "Render");
         }
 
         private bool IsDishNew(Dish newDish)
@@ -199,18 +199,17 @@ namespace TomasosTre.Controllers
         }
 
         /// <summary>
-        /// Draft method. Save cart values stored in session to DB, and clear session
+        /// Fetches the names and Ids of Dishes to the select2 box
         /// </summary>
-        public void PlaceOrder()
+        /// <returns>An collection of anon objects with IDs and Names</returns>
+        public IActionResult GetDishNames()
         {
-            var order = SessionService.LoadOrderRows(HttpContext);
-            _context.OrderRows.AddRange(order);
-            var ori = SessionService.LoadOrderRowIngredients(HttpContext);
-            _context.OrderRowIngredients.AddRange(ori);
-
-            _context.SaveChanges();
-
-            SessionService.ClearAll(HttpContext);
+            var model = _context.Dishes.Select(x => new
+            {
+                id = x.Id,
+                text = x.Name
+            }).ToList();
+            return Json(model);
         }
     }
 }

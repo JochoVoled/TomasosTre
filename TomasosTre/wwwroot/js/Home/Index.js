@@ -1,5 +1,5 @@
 ﻿$(document).ready(function () {
-    $.get('/Home/GetDishNames').then(function (response) {
+    $.get('/Api/GetDishNames').then(function (response) {
         $(".js-example-data-array").select2({
             placeholder: "Select a dish to order",
             data: response
@@ -9,7 +9,6 @@
             var val = $(".js-example-data-array").val();
             $.post('/Api/Add', { id: val }, function (response)
             {
-                //console.log("Post returned" + response);
                 $("#cart").html(response);
                 createOrderRowEvents();
             });
@@ -30,14 +29,13 @@ function createOrderRowEvents() {
         $.post("/Api/Set", { id: dishId, amount: amount }, function (response)
         {
             // debug line.
-            //console.log("Post returned" + response);
             $("#cart").html(response);
             createOrderRowEvents();
         });
     });
     $(".edit").on("click", function() {
         // Open div with checkboxes that lets user customize dish
-        $.get("/Home/DishCustomizePartial", { id: $(this).data("dish") }, function(response) {
+        $.get("/Render/DishCustomizePartial", { id: $(this).data("dish") }, function(response) {
             $("#dish-customizer-target").html(response);
                 registerCustomDishEvents();
             }
@@ -57,7 +55,6 @@ function createOrderRowEvents() {
 function registerCustomDishEvents() {
     $("#dish-customize").on("click", function ()
     {
-        //console.log("Howdy there");
         var data = {
             baseDishId: "",
             isOrderedIngredients: []
@@ -81,20 +78,30 @@ function registerCheckoutEvents() {
     $("#checkout").on("click", function ()
     {
         var data = {};
-        $.get('Home/Checkout', data, function (response)
+        $.get('Render/CheckoutPartial', data, function (response)
         {
             $("#root").html(response);
-            setupCheckout();
+            //setupCheckout();
         });
     });
 }
 
-function setupCheckout() {order
-    $("#order").on("click", function () {
-        var isRegistering = false;
+function setupCheckout() {
+    $("#order").on("click", function() {
+        var data = {
+            CardNumber: $("#card-number").val(),
+            SecurityNumber: $("#security-number").val(),
+            ExpiryMonth: $("#expiry-month").val(),
+            Address: $("#address").val(),
+            Zip: $("#zip").val(),
+            City: $("#city").val(),
+            Email: $("#email").val(),
+            IsRegistrating: $("#isRegistrating").checked
+        };
+
         $.get('Api/PlaceOrder', data, function (response) {
             $("#register").html(response);
-            if (isRegistering) {
+            if (data.IsRegistrating) {
                 setupCheckout();
             }            
         });

@@ -40,7 +40,7 @@ namespace TomasosTre
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ApplicationDbContext context)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ApplicationDbContext context, RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager)
         {
             if (env.IsDevelopment())
             {
@@ -50,7 +50,7 @@ namespace TomasosTre
             }
             else
             {
-                app.UseExceptionHandler("/Home/Error");
+                app.UseExceptionHandler("/Render/Error");
             }
 
             app.UseSession();
@@ -62,10 +62,10 @@ namespace TomasosTre
             {
                 routes.MapRoute(
                     name: "default",
-                    template: "{controller=Home}/{action=Index}/{id?}");
+                    template: "{controller=Render}/{action=Index}/{id?}");
             });
 
-            DataSetup.Setup(context);
+            DataSetup.Setup(context, userManager,roleManager);
         }
     }
 }
