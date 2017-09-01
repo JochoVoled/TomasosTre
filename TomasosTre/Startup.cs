@@ -50,7 +50,7 @@ namespace TomasosTre
             }
             else
             {
-                app.UseExceptionHandler("/Home/Error");
+                app.UseExceptionHandler("/Render/Error");
             }
 
             app.UseSession();
@@ -62,7 +62,7 @@ namespace TomasosTre
             {
                 routes.MapRoute(
                     name: "default",
-                    template: "{controller=Home}/{action=Index}/{id?}");
+                    template: "{controller=Render}/{action=Index}/{id?}");
             });
 
             DataSetup.Setup(context, userManager,roleManager);
