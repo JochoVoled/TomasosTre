@@ -42,5 +42,7 @@ namespace TomasosTre.Data
         public DbSet<OrderRowIngredient> OrderRowIngredients { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<Category> Categories { get; set; }
+        public DbSet<Address> Addresses { get; set; }
+        public DbSet<ApplicationUser> ApplicationUsers { get; set; }
     }
 }
