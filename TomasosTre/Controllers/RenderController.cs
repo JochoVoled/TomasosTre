@@ -115,43 +115,42 @@ namespace TomasosTre.Controllers
             {
                 return RedirectToAction("CheckoutPartial");
             }
-
-            // get and prepare data
-            var user = _userManager.GetUserAsync(User).Result;
-            var order = new Order
-            {
-                Date = DateTime.Now,
-                IsDelivered = false,
-            };
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            if (user != null)
-            {
-                order.ApplicationUserId = user.Id;
-                order.Customer = user;
-            }
-            var orderRows = SessionService.LoadOrderRows(HttpContext);
+            ApplicationUser user = _userManager.GetUserAsync(User).Result;
+            
+            // TODO Ask how to remove this HttpContext parameter - I don't want to pass it around everywhere
+            var order = OrderService.SetupNewOrder(checkout, user, HttpContext);
             var ori = SessionService.LoadOrderRowIngredients(HttpContext);
 
-            // connect all orderRows to new order
-            orderRows.ForEach(x => x.OrderId = order.Id);
+            //// get and prepare data
+            //var user = UserStateService.GetUser(User);
+            //var order = new Order
+            //{
+            //    Date = DateTime.Now,
+            //    IsDelivered = false,
+            //};
+            //// ReSharper disable once ConditionIsAlwaysTrueOrFalse
+            //if (user != null)
+            //{
+            //    order.ApplicationUserId = user.Id;
+            //    order.Customer = user;
+            //}
+            //var orderRows = SessionService.LoadOrderRows();
+            //var ori = SessionService.LoadOrderRowIngredients();
 
-            // get price sum, if stored, or calculate sum from stored order rows
-            orderRows.ForEach(x => order.Price += x.Dish.Price * x.Amount);            
-            ori.ForEach(x => order.Price += x.IsExtra ? x.Ingredient.Price : 0);
+            //// connect all orderRows to new order
+            //orderRows.ForEach(x => x.OrderId = order.Id);
 
-            // save readied order
-            _context.Orders.Add(order);
-            _context.OrderRows.AddRange(orderRows);
-            _context.SaveChanges();
+            //// get price sum, if stored, or calculate sum from stored order rows
+            //orderRows.ForEach(x => order.Price += x.Dish.Price * x.Amount);
+            //ori.ForEach(x => order.Price += x.IsExtra ? x.Ingredient.Price : 0);
 
-            _context.OrderRowIngredients.AddRange(ori);
-            _context.SaveChanges();
+            OrderService.SaveNewOrder(order, order.OrderRows, ori);
             SessionService.ClearAll(HttpContext);
 
             if (checkout.IsRegistrating)
                 return RedirectToAction("Register", "Account", routeValues: "/Confirmation");
             else
-                return View("Confirmation");            
+                return View("Confirmation");
         }
 
         public IActionResult Error()

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace TomasosTre.Models
 {
@@ -12,5 +13,6 @@ namespace TomasosTre.Models
         public Address Address { get; set; }
 
         public ApplicationUser Customer { get; set; }
+        public List<OrderRow> OrderRows { get; set; }
     }
 }
