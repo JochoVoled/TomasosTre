@@ -121,10 +121,14 @@ namespace TomasosTre.Controllers
             var order = new Order
             {
                 Date = DateTime.Now,
-                Customer = user,
-                ApplicationUserId = user.Id,
                 IsDelivered = false,
             };
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+            if (user != null)
+            {
+                order.ApplicationUserId = user.Id;
+                order.Customer = user;
+            }
             var orderRows = SessionService.LoadOrderRows(HttpContext);
             var ori = SessionService.LoadOrderRowIngredients(HttpContext);
 
@@ -138,12 +142,14 @@ namespace TomasosTre.Controllers
             // save readied order
             _context.Orders.Add(order);
             _context.OrderRows.AddRange(orderRows);
+            _context.SaveChanges();
+
             _context.OrderRowIngredients.AddRange(ori);
             _context.SaveChanges();
             SessionService.ClearAll(HttpContext);
 
             if (checkout.IsRegistrating)
-                return RedirectToAction("Register", "Account", routeValues: "Home/Confirmation");
+                return RedirectToAction("Register", "Account", routeValues: "/Confirmation");
             else
                 return View("Confirmation");            
         }
