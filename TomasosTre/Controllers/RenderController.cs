@@ -101,7 +101,9 @@ namespace TomasosTre.Controllers
 
         public IActionResult CheckoutPartial(CheckoutViewModel checkout = null)
         {
-            CheckoutViewModel data = checkout ?? _session.LoadCheckout(HttpContext);
+
+
+            CheckoutViewModel data = checkout.Address != null ? checkout : _session.LoadCheckout(HttpContext);
             ApplicationUser user = new ApplicationUser();
             if (_signInManager.IsSignedIn(User))
             {
@@ -124,7 +126,8 @@ namespace TomasosTre.Controllers
         public IActionResult Order(CheckoutViewModel checkout)
         {
             // Last Validation
-            DateTime expires = checkout.ExpiryMonth.ToDateTime();
+            DateTime expires = checkout.ExpiryMonth.ToExpiryDate();
+
             if (expires < DateTime.Now)
             {
                 return RedirectToAction("CheckoutPartial", checkout);
