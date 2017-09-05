@@ -247,7 +247,7 @@ namespace TomasosTre.Controllers
         {
             await _signInManager.SignOutAsync();
             _logger.LogInformation("User logged out.");
-            return RedirectToAction(nameof(RenderController.Index), "Home");
+            return RedirectToAction(nameof(RenderController.Index), "Render");
         }
 
         [HttpPost]

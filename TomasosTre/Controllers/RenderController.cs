@@ -13,6 +13,7 @@ using TomasosTre.ViewModels;
 using TomasosTre.Extensions;
 using System;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Authorization;
 
 namespace TomasosTre.Controllers
 {
@@ -169,6 +170,13 @@ namespace TomasosTre.Controllers
                 return RedirectToAction("Register", "Account", routeValues: "/Confirmation");
             else
                 return View("Confirmation");
+        }
+        
+        // Disabled while in development. Tested, and it works
+        //[Authorize(Roles = "Admin")]
+        public IActionResult Admin()
+        {
+            return View("Admin");
         }
 
         public IActionResult Error()
