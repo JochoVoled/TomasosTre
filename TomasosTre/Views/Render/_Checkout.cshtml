@@ -24,8 +24,9 @@
                    oninvalid="this.setCustomValidity('Please enter three numbers')" oninput="setCustomValidity('')" />
         </div>
         <div class="form-group">
+            @* TODO Find better cross-browser way to input month *@
             <label id="expiry-month" class="col-sm-4 control-label" for="@Model.ExpiryMonth">Expiry Date*</label>
-            <input class="col-sm-8 input-group" asp-for="@Model.ExpiryMonth" required type="month" min="@today" placeholder="@today.Month @today.Year" />
+            <input class="col-sm-8 input-group" asp-for="@Model.ExpiryMonth" required type="month" min="@today" placeholder="@today.Month @today.Year"/>
         </div>
     </div>
     @if (!SignInManager.IsSignedIn(User))
