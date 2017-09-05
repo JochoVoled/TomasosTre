@@ -6,7 +6,7 @@ using TomasosTre.ViewModels;
 
 namespace TomasosTre.Services
 {
-    public static class SessionService
+    public class SessionService
     {
         #region Save Methods
 
@@ -15,23 +15,27 @@ namespace TomasosTre.Services
         /// </summary>
         /// <param name="httpContext">Pass on static HttpContext</param>
         /// <param name="order">Current Order</param>
-        public static void Save(HttpContext httpContext,List<OrderRow> order)
+        public void Save(HttpContext httpContext,List<OrderRow> order)
         {
             var serializedValue = JsonConvert.SerializeObject(order, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore });
             httpContext.Session.SetString("Order", serializedValue);
         }
-
         /// <summary>
         /// Saves current Order to session variable
         /// </summary>
         /// <param name="httpContext">Pass on static HttpContext</param>
         /// <param name="ori">Current Order Row Ingredients</param>
-        public static void Save(HttpContext httpContext, List<OrderRowIngredient> ori)
+        public void Save(HttpContext httpContext, List<OrderRowIngredient> ori)
         {
             var serializedValue = JsonConvert.SerializeObject(ori, new JsonSerializerSettings{ReferenceLoopHandling = ReferenceLoopHandling.Ignore});
             httpContext.Session.SetString("ORI", serializedValue);
         }
-        public static void Save(HttpContext httpContext, CheckoutViewModel checkout)
+        /// <summary>
+        /// Saves data fields during Checkout to session variable
+        /// </summary>
+        /// <param name="httpContext"></param>
+        /// <param name="checkout"></param>
+        public void Save(HttpContext httpContext, CheckoutViewModel checkout)
         {
             var serializedValue = JsonConvert.SerializeObject(checkout, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore });
             httpContext.Session.SetString("Checkout", serializedValue);
@@ -45,7 +49,7 @@ namespace TomasosTre.Services
         /// </summary>
         /// <param name="httpContext">Pass on static HttpContext</param>
         /// <returns>Current Order</returns>
-        public static List<OrderRow> LoadOrderRows(HttpContext httpContext)
+        public List<OrderRow> LoadOrderRows(HttpContext httpContext)
         {
             List<OrderRow> order;
             if (httpContext.Session.GetString("Order") == null)
@@ -66,7 +70,7 @@ namespace TomasosTre.Services
         /// </summary>
         /// <param name="httpContext">Pass on static HttpContext</param>
         /// <returns>Current Order Row Ingredients</returns>
-        public static List<OrderRowIngredient> LoadOrderRowIngredients(HttpContext httpContext)
+        public List<OrderRowIngredient> LoadOrderRowIngredients(HttpContext httpContext)
         {
             List<OrderRowIngredient> order;
             if (httpContext.Session.GetString("ORI") == null)
@@ -81,7 +85,7 @@ namespace TomasosTre.Services
 
             return order;
         }
-        public static CheckoutViewModel LoadCheckout(HttpContext httpContext)
+        public CheckoutViewModel LoadCheckout(HttpContext httpContext)
         {
             CheckoutViewModel data;
             if (httpContext.Session.GetString("Checkout") == null)
@@ -103,7 +107,7 @@ namespace TomasosTre.Services
         /// Clears all session variables
         /// </summary>
         /// <param name="httpContext">Pass on static HttpContext</param>
-        public static void ClearAll(HttpContext httpContext)
+        public void ClearAll(HttpContext httpContext)
         {
             var order = LoadOrderRows(httpContext);
             var ori = LoadOrderRowIngredients(httpContext);
@@ -115,7 +119,7 @@ namespace TomasosTre.Services
         /// </summary>
         /// <param name="httpContext">Pass on static HttpContext</param>
         /// <param name="order">Any List with OrderRow type</param>
-        public static void Clear(HttpContext httpContext, List<OrderRow> order)
+        public void Clear(HttpContext httpContext, List<OrderRow> order)
         {
             httpContext.Session.SetString("Order", "");
         }
@@ -124,7 +128,7 @@ namespace TomasosTre.Services
         /// </summary>
         /// <param name="httpContext">Pass on static HttpContext</param>
         /// <param name="ori">Any List with OrderRowIngredient type</param>
-        public static void Clear(HttpContext httpContext, List<OrderRowIngredient> ori)
+        public void Clear(HttpContext httpContext, List<OrderRowIngredient> ori)
         {
             httpContext.Session.SetString("ORI", "");
         }

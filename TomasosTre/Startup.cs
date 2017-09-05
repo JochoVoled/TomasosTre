@@ -28,13 +28,19 @@ namespace TomasosTre
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseInMemoryDatabase("DefaultConnection"));
 
+            //services.Configure<IISOptions>(options =>
+            //    options.UseInMemoryDatabase("DefaultConnection")
+            //    );
+
             services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
 
             // Add application services.
             services.AddTransient<IEmailSender, EmailSender>();
-
+            services.AddTransient<SessionService>();
+            services.AddTransient<OrderService>();
+            services.AddTransient<UserStateService>();
             services.AddMvc();
             services.AddSession();
         }

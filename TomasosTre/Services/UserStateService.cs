@@ -1,29 +1,30 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
-using TomasosTre.Data;
 using TomasosTre.Models;
 
 namespace TomasosTre.Services
 {
     public class UserStateService
     {
-        public readonly UserManager<ApplicationUser> _userManager;
-        public readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
 
-        public UserStateService(ApplicationDbContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+        public UserStateService(
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
         }
 
-        public ApplicationUser GetUser(ClaimsPrincipal User)
+        public ApplicationUser GetUser(ClaimsPrincipal user)
         {
-            return _userManager.GetUserAsync(User).Result;
+            return _userManager.GetUserAsync(user).Result;
         }
 
-        public bool IsSignedIn(ClaimsPrincipal User)
+        public bool IsSignedIn(ClaimsPrincipal user)
         {
-            return _signInManager.IsSignedIn(User);
+            return _signInManager.IsSignedIn(user);
         }
     }
 }

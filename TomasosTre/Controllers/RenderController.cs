@@ -12,6 +12,7 @@ using TomasosTre.Services;
 using TomasosTre.ViewModels;
 using TomasosTre.Extensions;
 using System;
+using Microsoft.Extensions.Logging;
 
 namespace TomasosTre.Controllers
 {
@@ -20,12 +21,21 @@ namespace TomasosTre.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly ILogger<RenderController> _logger;
 
-        public RenderController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+        private readonly SessionService _session;
+        private readonly OrderService _order;
+
+        public RenderController(ApplicationDbContext context,
+            UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager,
+                ILogger<RenderController> logger, SessionService session, OrderService order)
         {
             _context = context;
             _userManager = userManager;
             _signInManager = signInManager;
+            _logger = logger;
+            _session = session;
+            _order = order;
         }
         
         /// <summary>
@@ -56,7 +66,7 @@ namespace TomasosTre.Controllers
         /// <returns>The Cart partial view</returns>
         public IActionResult CartPartial()
         {
-            var cartModel = new CartViewModel {OrderRows = SessionService.LoadOrderRows(HttpContext)};
+            var cartModel = new CartViewModel {OrderRows = _session.LoadOrderRows(HttpContext)};
 
             cartModel.OrderRows.ForEach(x => cartModel.PriceSum += (x.Dish.Price * x.Amount));
             return PartialView("Partial/_Cart",cartModel);
@@ -89,20 +99,24 @@ namespace TomasosTre.Controllers
             return PartialView("Partial/_DishCustomizer", model);
         }
 
-        public IActionResult CheckoutPartial()
+        public IActionResult CheckoutPartial(CheckoutViewModel checkout = null)
         {
-            CheckoutViewModel data = SessionService.LoadCheckout(HttpContext);
+            CheckoutViewModel data = checkout ?? _session.LoadCheckout(HttpContext);
             ApplicationUser user = new ApplicationUser();
             if (_signInManager.IsSignedIn(User))
             {
                 user = _userManager.GetUserAsync(User).Result;
             }
+            var address = user?.Addresses.FirstOrDefault(x =>
+                x.CustomerId == user.Id && x.StartDateTime < DateTime.Now && x.EndDateTime > DateTime.Now);
+
             var model = new CheckoutViewModel
             {
-                Address = user?.Address ?? data.Address,
-                City = user?.City ?? data.City,
+                Address = address?.Street ?? data.Address,
+                City = address?.City ?? data.City,
                 Email = user?.Email ?? data.Email,
-                Zip = user?.Zip ?? data.Zip,
+                Phone = user?.PhoneNumber ?? data.Phone,
+                Zip = address?.Zip ?? data.Zip,
             };
             return PartialView("_Checkout",model);
         }
@@ -113,13 +127,13 @@ namespace TomasosTre.Controllers
             DateTime expires = checkout.ExpiryMonth.ToDateTime();
             if (expires < DateTime.Now)
             {
-                return RedirectToAction("CheckoutPartial");
+                return RedirectToAction("CheckoutPartial", checkout);
             }
             ApplicationUser user = _userManager.GetUserAsync(User).Result;
             
             // TODO Ask how to remove this HttpContext parameter - I don't want to pass it around everywhere
-            var order = OrderService.SetupNewOrder(checkout, user, HttpContext);
-            var ori = SessionService.LoadOrderRowIngredients(HttpContext);
+            var order = _order.SetupNewOrder(checkout, user, HttpContext);
+            var ori = _session.LoadOrderRowIngredients(HttpContext);
 
             //// get and prepare data
             //var user = UserStateService.GetUser(User);
@@ -144,8 +158,9 @@ namespace TomasosTre.Controllers
             //orderRows.ForEach(x => order.Price += x.Dish.Price * x.Amount);
             //ori.ForEach(x => order.Price += x.IsExtra ? x.Ingredient.Price : 0);
 
-            OrderService.SaveNewOrder(order, order.OrderRows, ori);
-            SessionService.ClearAll(HttpContext);
+            _order.SaveNewOrder(order, order.OrderRows, ori);
+            _session.ClearAll(HttpContext);
+            _session.Save(HttpContext, checkout);
 
             if (checkout.IsRegistrating)
                 return RedirectToAction("Register", "Account", routeValues: "/Confirmation");
