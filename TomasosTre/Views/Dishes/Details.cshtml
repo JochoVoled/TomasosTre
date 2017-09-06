@@ -1,0 +1,56 @@
+﻿@model TomasosTre.ViewModels.Admin.DishesViewModel
+
+@{
+    ViewData["Title"] = "Dish Details";
+}
+
+<h2>Dish Details</h2>
+
+<div>
+    <h4>Dish</h4>
+    <hr />
+    <dl class="dl-horizontal">
+        <dt>
+            @Html.DisplayNameFor(model => model.Dish.Name)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Dish.Name)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Dish.Price)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Dish.Price)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Dish.Category)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Dish.Category.Name)
+        </dd>
+    </dl>
+    <dl>
+        @if (Model.Ingredients != null)
+        {
+
+            @foreach (var item in Model.Ingredients)
+            {
+                <dt> 
+                    <span>@item.Name</span>
+                    @if (item.IsChecked)
+                    {
+                        <input name="ingredient" type="checkbox" data-dish="@item.Id" checked disabled/>
+                    }
+                    else
+                    {
+                        <input name="ingredient" type="checkbox" data-dish="@item.Id" disabled/>
+                    }
+                </dt>
+            }
+        }
+    </dl>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model.Dish.Id">Edit</a> |
+    <a asp-action="Index">Back to List</a>
+</div>

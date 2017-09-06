@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace TomasosTre.Models
 {
@@ -9,7 +10,9 @@ namespace TomasosTre.Models
         public decimal Price { get; set; }
         public string ApplicationUserId { get; set; }
         public bool IsDelivered { get; set; }
+        public Address Address { get; set; }
 
         public ApplicationUser Customer { get; set; }
+        public List<OrderRow> OrderRows { get; set; }
     }
 }

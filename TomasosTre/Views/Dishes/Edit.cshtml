@@ -1,0 +1,59 @@
+﻿@model TomasosTre.ViewModels.Admin.DishesViewModel
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h2>Edit</h2>
+
+<h4>Dish</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Dish.Id" />
+            <div class="form-group">
+                <label asp-for="Dish.Name" class="control-label"></label>
+                <input asp-for="Dish.Name" class="form-control" />
+                <span asp-validation-for="Dish.Name" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Dish.CategoryId" class="control-label"></label>
+                <select asp-for="Dish.CategoryId" class="form-control" asp-items="ViewBag.CategoryId"></select>
+                <span asp-validation-for="Dish.CategoryId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Dish.Price" class="control-label"></label>
+                <input asp-for="Dish.Price" class="form-control" />
+                <span asp-validation-for="Dish.Price" class="text-danger"></span>
+            </div>            
+            @if (Model.Ingredients != null)
+            {
+
+                @foreach (var item in Model.Ingredients)
+                {
+                    <div class="form-group">
+                        <label asp-for="@item.Name" class="control-label">@item.Name</label>
+                        @if (item.IsChecked)
+                        {
+                            <input name="ingredient" type="checkbox" data-dish="@item.Id" checked />
+                        }
+                        else
+                        {
+                            <input name="ingredient" type="checkbox" data-dish="@item.Id" />
+                        }
+                    </div>
+                }
+            }
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-default" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+

@@ -14,10 +14,12 @@ namespace TomasosTre.Controllers
     public class ApiController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly SessionService _session;
 
-        public ApiController(ApplicationDbContext context)
+        public ApiController(ApplicationDbContext context, SessionService session)
         {
             _context = context;
+            _session = session;
         }
 
         /// <summary>
@@ -29,7 +31,7 @@ namespace TomasosTre.Controllers
         public IActionResult Add(int id)
         {
             Dish option = _context.Dishes.First(dish => dish.Id == id);
-            List<OrderRow> order = SessionService.LoadOrderRows(HttpContext);
+            List<OrderRow> order = _session.LoadOrderRows(HttpContext);
             OrderRow row = order.SingleOrDefault(or => or.DishId == option.Id);
             if (row != null)
             {
@@ -46,7 +48,7 @@ namespace TomasosTre.Controllers
                 order.Add(row);
             }
 
-            SessionService.Save(HttpContext,order);
+            _session.Save(HttpContext,order);
 
             return RedirectToAction("CartPartial", "Render");
         }
@@ -59,12 +61,12 @@ namespace TomasosTre.Controllers
         //[HttpDelete]
         public IActionResult Remove(int id)
         {
-            List<OrderRow> order = SessionService.LoadOrderRows(HttpContext);
+            List<OrderRow> order = _session.LoadOrderRows(HttpContext);
             OrderRow remove = order.Find(o => o.DishId == id);
 
             order.Remove(remove);
 
-            SessionService.Save(HttpContext,order);
+            _session.Save(HttpContext,order);
             return RedirectToAction("CartPartial", "Render");
         }
         /// <summary>
@@ -76,12 +78,12 @@ namespace TomasosTre.Controllers
         //[HttpPatch]
         public IActionResult Set(int id, int amount)
         {
-            List<OrderRow> order = SessionService.LoadOrderRows(HttpContext);
+            List<OrderRow> order = _session.LoadOrderRows(HttpContext);
             OrderRow update = order.Find(o => o.DishId == id);
 
             update.Amount = amount;
 
-            SessionService.Save(HttpContext,order);
+            _session.Save(HttpContext,order);
             return RedirectToAction("CartPartial", "Render");
         }
         /// <summary>
@@ -101,7 +103,7 @@ namespace TomasosTre.Controllers
             IEnumerable<Ingredient> hasAdded = orderedIngredients.Except(optionIngredients).ToList();
 
             // Create a new dish, to connect this instance to the differing ingredients
-            var order = SessionService.LoadOrderRows(HttpContext);
+            var order = _session.LoadOrderRows(HttpContext);
 
             // Remove one occurence of base dish
             if (order.Find(x => x.DishId == baseDishId).Amount == 1)
@@ -161,7 +163,7 @@ namespace TomasosTre.Controllers
                 OrderRowId = newOrder.OrderRowId,
                 OrderRow = newOrder
             }));
-            SessionService.Save(HttpContext, orderRowIngredients);
+            _session.Save(HttpContext, orderRowIngredients);
 
             // Modify price
             foreach (var addedIngredient in hasAdded.Except(optionIngredients))
@@ -172,7 +174,7 @@ namespace TomasosTre.Controllers
             {
                 newOrder.Dish.Price -= removeIngredient.Price;
             }
-            SessionService.Save(HttpContext, order);
+            _session.Save(HttpContext, order);
             return RedirectToAction("CartPartial", "Render");
         }
 

@@ -12,6 +12,9 @@ using TomasosTre.Services;
 using TomasosTre.ViewModels;
 using TomasosTre.Extensions;
 using System;
+using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Authorization;
+using TomasosTre.Structs;
 
 namespace TomasosTre.Controllers
 {
@@ -20,12 +23,27 @@ namespace TomasosTre.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly ILogger<RenderController> _logger;
 
-        public RenderController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+        private readonly SessionService _session;
+        private readonly OrderService _order;
+        private readonly DishIngredientService _dishIngredientService;
+
+        public RenderController(ApplicationDbContext context,
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager,
+            ILogger<RenderController> logger,
+            SessionService session,
+            OrderService order,
+            DishIngredientService dishIngredientService)
         {
             _context = context;
             _userManager = userManager;
             _signInManager = signInManager;
+            _logger = logger;
+            _session = session;
+            _order = order;
+            _dishIngredientService = dishIngredientService;
         }
         
         /// <summary>
@@ -39,13 +57,14 @@ namespace TomasosTre.Controllers
                 Cart = new CartViewModel(),
                 DishCustomization = new DishCustomizationViewModel()
             };
-            
+
             // If user is returning from a non-finished purchase
-            if (HttpContext.Session.GetString("Order") != null)
-            {
-                string str = HttpContext.Session.GetString("Order");
-                model.Cart.OrderRows = JsonConvert.DeserializeObject<List<OrderRow>>(str);
-            }
+            model.Cart.OrderRows = _session.LoadOrderRows(HttpContext);
+            //if (HttpContext.Session.GetString("Order") != null)
+            //{
+            //    string str = HttpContext.Session.GetString("Order");
+            //    model.Cart.OrderRows = JsonConvert.DeserializeObject<List<OrderRow>>(str);
+            //}
             model.Cart.OrderRows.ForEach(x => model.Cart.PriceSum += (x.Dish.Price * x.Amount));
             return View(model);
         }
@@ -56,7 +75,7 @@ namespace TomasosTre.Controllers
         /// <returns>The Cart partial view</returns>
         public IActionResult CartPartial()
         {
-            var cartModel = new CartViewModel {OrderRows = SessionService.LoadOrderRows(HttpContext)};
+            var cartModel = new CartViewModel {OrderRows = _session.LoadOrderRows(HttpContext)};
 
             cartModel.OrderRows.ForEach(x => cartModel.PriceSum += (x.Dish.Price * x.Amount));
             return PartialView("Partial/_Cart",cartModel);
@@ -65,44 +84,58 @@ namespace TomasosTre.Controllers
         public IActionResult DishCustomizePartial(int id)
         {
             var allIngredients = _context.Ingredients.ToList();
-            Dish dish = _context.Dishes.FirstOrDefault(x => x.Id == id);
-            if (dish == null)
+            
+            try
             {
-                // Return BadRequest response code (401?)
-                
-            }
-            var model = new DishCustomizationViewModel{
-                Dish = dish
-            };
-            foreach (var i in allIngredients)
-            {
-                var isChecked = _context.DishIngredients.Where(d => d.DishId == dish.Id).FirstOrDefault(di => di.IngredientId == i.Id) != null;
-                model.DishIngredients.Add(new DishCustomizationStruct
+                Dish dish = _context.Dishes.First(x => x.Id == id);
+                var model = new DishCustomizationViewModel
                 {
-                    Id = i.Id,
-                    Name = i.Name,
-                    IsChecked = isChecked,
-                    Price = i.Price
-                });
+                    Dish = dish,
+                    DishIngredients = _dishIngredientService.GetIngredientsRelatedTo(dish)
+                };
+                return PartialView("Partial/_DishCustomizer", model);
             }
-
-            return PartialView("Partial/_DishCustomizer", model);
+            catch (Exception)
+            {
+                return BadRequest();
+            }
+            //if (dish == null)
+            //{
+            //    // Return BadRequest response code (401?)
+                
+            //}
+            
+            //foreach (var i in allIngredients)
+            //{
+            //    var isChecked = _context.DishIngredients.Where(d => d.DishId == dish.Id).FirstOrDefault(di => di.IngredientId == i.Id) != null;
+            //    model.DishIngredients.Add(new DishIngredientStruct
+            //    {
+            //        Id = i.Id,
+            //        Name = i.Name,
+            //        IsChecked = isChecked,
+            //        Price = i.Price
+            //    });
+            //}            
         }
 
-        public IActionResult CheckoutPartial()
+        public IActionResult CheckoutPartial(CheckoutViewModel checkout = null)
         {
-            CheckoutViewModel data = SessionService.LoadCheckout(HttpContext);
+            CheckoutViewModel data = checkout.Address != null ? checkout : _session.LoadCheckout(HttpContext);
             ApplicationUser user = new ApplicationUser();
             if (_signInManager.IsSignedIn(User))
             {
                 user = _userManager.GetUserAsync(User).Result;
             }
+            var address = user?.Addresses.FirstOrDefault(x =>
+                x.CustomerId == user.Id && x.StartDateTime < DateTime.Now && x.EndDateTime > DateTime.Now);
+
             var model = new CheckoutViewModel
             {
-                Address = user?.Address ?? data.Address,
-                City = user?.City ?? data.City,
+                Address = address?.Street ?? data.Address,
+                City = address?.City ?? data.City,
                 Email = user?.Email ?? data.Email,
-                Zip = user?.Zip ?? data.Zip,
+                Phone = user?.PhoneNumber ?? data.Phone,
+                Zip = address?.Zip ?? data.Zip,
             };
             return PartialView("_Checkout",model);
         }
@@ -110,42 +143,56 @@ namespace TomasosTre.Controllers
         public IActionResult Order(CheckoutViewModel checkout)
         {
             // Last Validation
-            DateTime expires = checkout.ExpiryMonth.ToDateTime();
+            DateTime expires = checkout.ExpiryMonth.ToExpiryDate();
+
             if (expires < DateTime.Now)
             {
-                return RedirectToAction("CheckoutPartial");
+                return RedirectToAction("CheckoutPartial", checkout);
             }
+            ApplicationUser user = _userManager.GetUserAsync(User).Result;
+            
+            // TODO Ask how to remove this HttpContext parameter - I don't want to pass it around everywhere
+            var order = _order.SetupNewOrder(checkout, user, HttpContext);
+            var ori = _session.LoadOrderRowIngredients(HttpContext);
 
-            // get and prepare data
-            var user = _userManager.GetUserAsync(User).Result;
-            var order = new Order
-            {
-                Date = DateTime.Now,
-                Customer = user,
-                ApplicationUserId = user.Id,
-                IsDelivered = false,
-            };
-            var orderRows = SessionService.LoadOrderRows(HttpContext);
-            var ori = SessionService.LoadOrderRowIngredients(HttpContext);
+            //// get and prepare data
+            //var user = UserStateService.GetUser(User);
+            //var order = new Order
+            //{
+            //    Date = DateTime.Now,
+            //    IsDelivered = false,
+            //};
+            //// ReSharper disable once ConditionIsAlwaysTrueOrFalse
+            //if (user != null)
+            //{
+            //    order.ApplicationUserId = user.Id;
+            //    order.Customer = user;
+            //}
+            //var orderRows = SessionService.LoadOrderRows();
+            //var ori = SessionService.LoadOrderRowIngredients();
 
-            // connect all orderRows to new order
-            orderRows.ForEach(x => x.OrderId = order.Id);
+            //// connect all orderRows to new order
+            //orderRows.ForEach(x => x.OrderId = order.Id);
 
-            // get price sum, if stored, or calculate sum from stored order rows
-            orderRows.ForEach(x => order.Price += x.Dish.Price * x.Amount);            
-            ori.ForEach(x => order.Price += x.IsExtra ? x.Ingredient.Price : 0);
+            //// get price sum, if stored, or calculate sum from stored order rows
+            //orderRows.ForEach(x => order.Price += x.Dish.Price * x.Amount);
+            //ori.ForEach(x => order.Price += x.IsExtra ? x.Ingredient.Price : 0);
 
-            // save readied order
-            _context.Orders.Add(order);
-            _context.OrderRows.AddRange(orderRows);
-            _context.OrderRowIngredients.AddRange(ori);
-            _context.SaveChanges();
-            SessionService.ClearAll(HttpContext);
+            _order.SaveNewOrder(order, order.OrderRows, ori);
+            _session.ClearAll(HttpContext);
+            _session.Save(HttpContext, checkout);
 
             if (checkout.IsRegistrating)
-                return RedirectToAction("Register", "Account", routeValues: "Home/Confirmation");
+                return RedirectToAction("Register", "Account", routeValues: "/Confirmation");
             else
-                return View("Confirmation");            
+                return View("Confirmation");
+        }
+        
+        // Disabled while in development. Tested, and it works
+        //[Authorize(Roles = "Admin")]
+        public IActionResult Admin()
+        {
+            return View("Admin");
         }
 
         public IActionResult Error()
