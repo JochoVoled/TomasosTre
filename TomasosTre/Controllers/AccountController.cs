@@ -335,7 +335,7 @@ namespace TomasosTre.Controllers
         {
             if (userId == null || code == null)
             {
-                return RedirectToAction(nameof(RenderController.Index), "Home");
+                return RedirectToAction(nameof(RenderController.Index), "Render");
             }
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
@@ -455,7 +455,7 @@ namespace TomasosTre.Controllers
             }
             else
             {
-                return RedirectToAction(nameof(RenderController.Index), "Home");
+                return RedirectToAction(nameof(RenderController.Index), "Render");
             }
         }
 
