@@ -14,6 +14,7 @@ using TomasosTre.Extensions;
 using System;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Authorization;
+using TomasosTre.Structs;
 
 namespace TomasosTre.Controllers
 {
@@ -26,10 +27,15 @@ namespace TomasosTre.Controllers
 
         private readonly SessionService _session;
         private readonly OrderService _order;
+        private readonly DishIngredientService _dishIngredientService;
 
         public RenderController(ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager,
-                ILogger<RenderController> logger, SessionService session, OrderService order)
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager,
+            ILogger<RenderController> logger,
+            SessionService session,
+            OrderService order,
+            DishIngredientService dishIngredientService)
         {
             _context = context;
             _userManager = userManager;
@@ -37,6 +43,7 @@ namespace TomasosTre.Controllers
             _logger = logger;
             _session = session;
             _order = order;
+            _dishIngredientService = dishIngredientService;
         }
         
         /// <summary>
@@ -50,13 +57,14 @@ namespace TomasosTre.Controllers
                 Cart = new CartViewModel(),
                 DishCustomization = new DishCustomizationViewModel()
             };
-            
+
             // If user is returning from a non-finished purchase
-            if (HttpContext.Session.GetString("Order") != null)
-            {
-                string str = HttpContext.Session.GetString("Order");
-                model.Cart.OrderRows = JsonConvert.DeserializeObject<List<OrderRow>>(str);
-            }
+            model.Cart.OrderRows = _session.LoadOrderRows(HttpContext);
+            //if (HttpContext.Session.GetString("Order") != null)
+            //{
+            //    string str = HttpContext.Session.GetString("Order");
+            //    model.Cart.OrderRows = JsonConvert.DeserializeObject<List<OrderRow>>(str);
+            //}
             model.Cart.OrderRows.ForEach(x => model.Cart.PriceSum += (x.Dish.Price * x.Amount));
             return View(model);
         }
@@ -76,34 +84,42 @@ namespace TomasosTre.Controllers
         public IActionResult DishCustomizePartial(int id)
         {
             var allIngredients = _context.Ingredients.ToList();
-            Dish dish = _context.Dishes.FirstOrDefault(x => x.Id == id);
-            if (dish == null)
+            
+            try
             {
-                // Return BadRequest response code (401?)
-                
-            }
-            var model = new DishCustomizationViewModel{
-                Dish = dish
-            };
-            foreach (var i in allIngredients)
-            {
-                var isChecked = _context.DishIngredients.Where(d => d.DishId == dish.Id).FirstOrDefault(di => di.IngredientId == i.Id) != null;
-                model.DishIngredients.Add(new DishCustomizationStruct
+                Dish dish = _context.Dishes.First(x => x.Id == id);
+                var model = new DishCustomizationViewModel
                 {
-                    Id = i.Id,
-                    Name = i.Name,
-                    IsChecked = isChecked,
-                    Price = i.Price
-                });
+                    Dish = dish,
+                    DishIngredients = _dishIngredientService.GetIngredientsRelatedTo(dish)
+                };
+                return PartialView("Partial/_DishCustomizer", model);
             }
-
-            return PartialView("Partial/_DishCustomizer", model);
+            catch (Exception)
+            {
+                return BadRequest();
+            }
+            //if (dish == null)
+            //{
+            //    // Return BadRequest response code (401?)
+                
+            //}
+            
+            //foreach (var i in allIngredients)
+            //{
+            //    var isChecked = _context.DishIngredients.Where(d => d.DishId == dish.Id).FirstOrDefault(di => di.IngredientId == i.Id) != null;
+            //    model.DishIngredients.Add(new DishIngredientStruct
+            //    {
+            //        Id = i.Id,
+            //        Name = i.Name,
+            //        IsChecked = isChecked,
+            //        Price = i.Price
+            //    });
+            //}            
         }
 
         public IActionResult CheckoutPartial(CheckoutViewModel checkout = null)
         {
-
-
             CheckoutViewModel data = checkout.Address != null ? checkout : _session.LoadCheckout(HttpContext);
             ApplicationUser user = new ApplicationUser();
             if (_signInManager.IsSignedIn(User))

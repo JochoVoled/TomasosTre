@@ -42,6 +42,7 @@ namespace TomasosTre
             services.AddTransient<OrderService>();
             services.AddTransient<IngredientService>();
             services.AddTransient<UserStateService>();
+            services.AddTransient<DishIngredientService>();
             services.AddMvc();
             services.AddSession();
         }

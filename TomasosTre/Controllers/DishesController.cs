@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using TomasosTre.Data;
 using TomasosTre.Models;
 using Microsoft.AspNetCore.Authorization;
+using TomasosTre.ViewModels.Admin;
+using TomasosTre.Services;
 
 namespace TomasosTre.Controllers
 {
@@ -16,10 +18,12 @@ namespace TomasosTre.Controllers
     public class DishesController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly DishIngredientService _dishIngredientService;
 
-        public DishesController(ApplicationDbContext context)
+        public DishesController(ApplicationDbContext context, DishIngredientService dishIngredientService)
         {
             _context = context;
+            _dishIngredientService = dishIngredientService;
         }
 
         // GET: Dishes
@@ -37,22 +41,31 @@ namespace TomasosTre.Controllers
                 return NotFound();
             }
 
-            var dish = await _context.Dishes
+            var model = new DishesViewModel();
+            model.Dish = await _context.Dishes
                 .Include(d => d.Category)
                 .SingleOrDefaultAsync(m => m.Id == id);
-            if (dish == null)
+            if (model.Dish == null)
             {
                 return NotFound();
             }
+            model.Ingredients = _dishIngredientService.GetIngredientsRelatedTo(model.Dish);
 
-            return View(dish);
+            return View(model);
         }
 
         // GET: Dishes/Create
         public IActionResult Create()
         {
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "CategoryId", "CategoryId");
-            return View();
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "CategoryId", "Name");
+
+            var model = new DishesViewModel
+            {
+                Dish = new Dish(),
+                Ingredients = _dishIngredientService.NewDish()
+            };
+
+            return View(model);
         }
 
         // POST: Dishes/Create
@@ -65,10 +78,11 @@ namespace TomasosTre.Controllers
             if (ModelState.IsValid)
             {
                 _context.Add(dish);
+                // TODO Add DishIngredients to corresponding table
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "CategoryId", "CategoryId", dish.CategoryId);
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "CategoryId", "Name", dish.CategoryId);
             return View(dish);
         }
 
@@ -80,13 +94,16 @@ namespace TomasosTre.Controllers
                 return NotFound();
             }
 
-            var dish = await _context.Dishes.SingleOrDefaultAsync(m => m.Id == id);
-            if (dish == null)
+            var model = new DishesViewModel();
+            model.Dish = await _context.Dishes.SingleOrDefaultAsync(m => m.Id == id);
+            if (model.Dish == null)
             {
                 return NotFound();
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "CategoryId", "CategoryId", dish.CategoryId);
-            return View(dish);
+            model.Ingredients = _dishIngredientService.GetIngredientsRelatedTo(model.Dish);
+
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "CategoryId", "Name", model.Dish.CategoryId);
+            return View(model);
         }
 
         // POST: Dishes/Edit/5
@@ -121,7 +138,7 @@ namespace TomasosTre.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "CategoryId", "CategoryId", dish.CategoryId);
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "CategoryId", "Name", dish.CategoryId);
             return View(dish);
         }
 
