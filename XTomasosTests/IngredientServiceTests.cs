@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using TomasosTre.Data;
+using TomasosTre.Models;
 using TomasosTre.Services;
 using Xunit;
 
@@ -15,7 +16,9 @@ namespace XTomasosTests
 
         public IngredientServiceTests()
         {
-            var efServiceProvider = new ServiceCollection().AddEntityFrameworkInMemoryDatabase().BuildServiceProvider();
+            var efServiceProvider = new ServiceCollection()
+                .AddEntityFrameworkInMemoryDatabase()
+                .BuildServiceProvider();
 
             var services = new ServiceCollection();
 
@@ -31,12 +34,21 @@ namespace XTomasosTests
         public override void InitDb()
         {
             base.InitDb();
+            var context = _serviceProvider.GetService<ApplicationDbContext>();
+            context.Ingredients.Add(new Ingredient { Name = "Banana", Price = 2 });
+            context.Ingredients.Add(new Ingredient { Name = "Apple",  Price = 5 });
+
+            context.SaveChanges();
         }
 
         [Fact]
-        public void IST_All_Are_Sorted()
+        public void All_Are_Sorted()
         {
-            Assert.Equal(2, 0);
+            var ingredients = _serviceProvider.GetService<IngredientService>();
+            var ings = ingredients.All();
+            Assert.Equal(2, ings.Count);
+            Assert.Equal("Apple", ings[0].Name);
+            Assert.Equal("Banana",ings[1].Name);
         }
     }
 }
