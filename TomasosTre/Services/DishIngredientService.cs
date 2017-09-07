@@ -52,5 +52,15 @@ namespace TomasosTre.Services
             }
             return data;
         }
+
+        public void CreateMany(Dish dish, List<Ingredient> ingredients)
+        {
+            ingredients.ForEach(x => dish.DishIngredients.Add(new DishIngredient
+            {
+                DishId = dish.Id,
+                IngredientId = x.Id
+            }));
+            _context.DishIngredients.AddRange(dish.DishIngredients);
+        }
     }
 }

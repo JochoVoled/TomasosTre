@@ -83,5 +83,19 @@ namespace TomasosTre.Services
             _context.OrderRowIngredients.AddRange(ori);
             _context.SaveChanges();
         }
+
+        public decimal ModifyPrice(List<Ingredient> added, List<Ingredient> subtracted)
+        {
+            decimal newPrice = 0m;
+            foreach (var item in added)
+            {
+                newPrice += item.Price;
+            }
+            foreach (var item in subtracted)
+            {
+                newPrice -= item.Price;
+            }
+            return newPrice;
+        }
     }
 }
