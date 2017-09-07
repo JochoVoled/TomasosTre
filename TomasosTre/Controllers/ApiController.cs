@@ -15,11 +15,21 @@ namespace TomasosTre.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly SessionService _session;
+        private readonly DishService _dish;
+        private readonly DishIngredientService _dishIngredientService;
+        private readonly OrderService _order;
 
-        public ApiController(ApplicationDbContext context, SessionService session)
+        public ApiController(ApplicationDbContext context,
+            SessionService session,
+            DishService dish,
+            DishIngredientService dishIngredientService,
+            OrderService order)
         {
             _context = context;
             _session = session;
+            _dish = dish;
+            _dishIngredientService = dishIngredientService;
+            _order = order;
         }
 
         /// <summary>
@@ -95,12 +105,9 @@ namespace TomasosTre.Controllers
         public IActionResult CustomizedDish(int baseDishId, List<int> isOrderedIngredients)
         {
             Dish option = _context.Dishes.First(dish => dish.Id == baseDishId);
-            var optionIngredients = _context.DishIngredients.Where(x => x.DishId == baseDishId).Select(x => x.Ingredient).ToList();
+            List<Ingredient> optionIngredients = _context.DishIngredients.Where(x => x.DishId == baseDishId).Select(x => x.Ingredient).ToList();
             List<Ingredient> orderedIngredients = new List<Ingredient>();
-
             isOrderedIngredients.ForEach(x => orderedIngredients.Add(_context.Ingredients.First(y => y.Id == x)));
-            IEnumerable<Ingredient> hasDeselected = optionIngredients.Except(orderedIngredients).ToList();
-            IEnumerable<Ingredient> hasAdded = orderedIngredients.Except(optionIngredients).ToList();
 
             // Create a new dish, to connect this instance to the differing ingredients
             var order = _session.LoadOrderRows(HttpContext);
@@ -114,37 +121,41 @@ namespace TomasosTre.Controllers
             {
                 order.Find(x => x.DishId == baseDishId).Amount -= 1;
             }
-            
+
             // Set up a new Dish
-            var newDish = new Dish
-            {
-                Price = option.Price,
-                Name = $"Custom {option.Name}",
-                DishIngredients = new List<DishIngredient>()
-            };
-            var newIngredients = optionIngredients.Except(hasDeselected).ToList().Union(hasAdded).ToList();
-            newIngredients.ForEach(x => newDish.DishIngredients.Add(new DishIngredient
-            {
-                DishId = newDish.Id,
-                IngredientId = x.Id
-            }));
+            var newDish = _dish.NewCustomDish(option.Name, option.Price);
+
+            // Why did I complicate this so much? Did I forget about orderIngredients? Commenting until that question can be answered
+            //var newIngredients = optionIngredients.Except(hasDeselected).ToList().Union(hasAdded).ToList();
+            //newIngredients.ForEach(x => newDish.DishIngredients.Add(new DishIngredient
+            //{
+            //    DishId = newDish.Id,
+            //    IngredientId = x.Id
+            //}));
+
+            _dishIngredientService.CreateMany(newDish, orderedIngredients);
+
+            //orderedIngredients.ForEach(x => newDish.DishIngredients.Add(new DishIngredient
+            //{
+            //    DishId = newDish.Id,
+            //    IngredientId = x.Id
+            //}));
+
             var newOrder = new OrderRow
             {
                 DishId = newDish.Id,
                 Dish = newDish,
-                Amount = 1,
-                
+                Amount = 1                
             };
 
-            // Add it to the table, if it's a new combination of ingredients
-            if (IsDishNew(newDish))
-            {
-                _context.Dishes.Add(newDish);
-            }
             order.Add(newOrder);
 
+            List<Ingredient> hasDeselected = optionIngredients.Except(orderedIngredients).ToList();
+            List<Ingredient> hasAdded = orderedIngredients.Except(optionIngredients).ToList();
+
             // Set up the diffs in a second session variable, noting if its extra or removed
-            var orderRowIngredients = hasDeselected.Select(ingredient => new OrderRowIngredient
+            List<OrderRowIngredient> orderRowIngredients = new List<OrderRowIngredient>();
+            orderRowIngredients.AddRange(hasDeselected.Select(ingredient => new OrderRowIngredient
             {
                 Ingredient = ingredient,
                 IngredientId = ingredient.Id,
@@ -152,8 +163,7 @@ namespace TomasosTre.Controllers
                 IsExtra = false,
                 OrderRowId = newOrder.OrderRowId,
                 OrderRow = newOrder
-            })
-                .ToList();
+            }));
             orderRowIngredients.AddRange(hasAdded.Select(ingredient => new OrderRowIngredient
             {
                 Ingredient = ingredient,
@@ -166,38 +176,17 @@ namespace TomasosTre.Controllers
             _session.Save(HttpContext, orderRowIngredients);
 
             // Modify price
-            foreach (var addedIngredient in hasAdded.Except(optionIngredients))
-            {
-                newOrder.Dish.Price += addedIngredient.Price;
-            }
-            foreach (var removeIngredient in hasDeselected.Except(optionIngredients))
-            {
-                newOrder.Dish.Price -= removeIngredient.Price;
-            }
+            newOrder.Dish.Price += _order.ModifyPrice(hasAdded, hasDeselected);
+            //foreach (var addedIngredient in hasAdded.Except(optionIngredients))
+            //{
+            //    newOrder.Dish.Price += addedIngredient.Price;
+            //}
+            //foreach (var removeIngredient in hasDeselected.Except(optionIngredients))
+            //{
+            //    newOrder.Dish.Price -= removeIngredient.Price;
+            //}
             _session.Save(HttpContext, order);
             return RedirectToAction("CartPartial", "Render");
-        }
-
-        private bool IsDishNew(Dish newDish)
-        {
-            // All customized X are called "custom X", so filter that first for performance
-            var filtered = _context.Dishes.Where(x => x.Name == newDish.Name).ToList();
-            if (!filtered.Any())
-            {
-                return true;
-            }
-            // Check if any dish has the same - no more, no less - ingredants as the new dish.
-            foreach (var dish in filtered)
-            {
-                // A except B, and B except A, can only be equal if A = B
-                var equals = dish.DishIngredients.Except(newDish.DishIngredients) == newDish.DishIngredients.Except(dish.DishIngredients);
-                if (equals)
-                {
-                    return false;
-                }
-            }
-            // if no Dishes remain, there are no duplicates; Dish is new
-            return true;
         }
 
         /// <summary>
