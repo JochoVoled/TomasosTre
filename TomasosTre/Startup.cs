@@ -40,6 +40,7 @@ namespace TomasosTre
             services.AddTransient<IEmailSender, EmailSender>();
             services.AddTransient<SessionService>();
             services.AddTransient<OrderService>();
+            services.AddTransient<OrderRowIngredientService>();
             services.AddTransient<IngredientService>();
             services.AddTransient<UserStateService>();
             services.AddTransient<DishIngredientService>();

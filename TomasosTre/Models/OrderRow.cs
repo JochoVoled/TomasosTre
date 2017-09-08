@@ -12,5 +12,13 @@ namespace TomasosTre.Models
         public Dish Dish { get; set; }
         public Order Order { get; set; }
         public List<OrderRowIngredient> OrderRowIngredient { get; set; }
+
+        public OrderRow(){}
+        public OrderRow(Dish dish, int amount)
+        {
+            Dish = dish;
+            DishId = dish.Id;
+            Amount = amount;
+        }
     }
 }

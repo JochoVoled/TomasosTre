@@ -84,8 +84,12 @@ namespace TomasosTre.Services
             _context.SaveChanges();
         }
 
-        public decimal ModifyPrice(List<Ingredient> added, List<Ingredient> subtracted)
+        public decimal ModifyPrice(int dishId, List<Ingredient> orderedIngredients)
         {
+            List<Ingredient> optionIngredients = _context.DishIngredients.Where(x => x.DishId == dishId).Select(x => x.Ingredient).ToList();
+            List<Ingredient> subtracted = optionIngredients.Except(orderedIngredients).ToList();
+            List<Ingredient> added = orderedIngredients.Except(optionIngredients).ToList();
+
             decimal newPrice = 0m;
             foreach (var item in added)
             {

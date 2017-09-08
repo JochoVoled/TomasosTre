@@ -19,18 +19,21 @@ namespace TomasosTre.Controllers
         private readonly DishService _dish;
         private readonly DishIngredientService _dishIngredientService;
         private readonly OrderService _order;
+        private readonly OrderRowIngredientService _ori;
 
         public ApiController(ApplicationDbContext context,
             SessionService session,
             DishService dish,
             DishIngredientService dishIngredientService,
-            OrderService order)
+            OrderService order,
+            OrderRowIngredientService ori)
         {
             _context = context;
             _session = session;
             _dish = dish;
             _dishIngredientService = dishIngredientService;
             _order = order;
+            _ori = ori;
         }
         #endregion
 
@@ -94,6 +97,7 @@ namespace TomasosTre.Controllers
             // Remove one occurence of base dish
             if (order.Find(x => x.DishId == baseDishId).Amount == 1)
             {
+                // TODO Solve Bug: Function does not remove OrderRow
                 _session.Delete(baseDishId);
             }
             else
@@ -106,42 +110,13 @@ namespace TomasosTre.Controllers
             _dishIngredientService.CreateMany(newDish, orderedIngredients);
 
             // Create a new OrderRow
-            var newOrder = new OrderRow
-            {
-                DishId = newDish.Id,
-                Dish = newDish,
-                Amount = 1                
-            };
+            var newOrder = new OrderRow(newDish, 1);
 
             order.Add(newOrder);
-
-            List<Ingredient> hasDeselected = optionIngredients.Except(orderedIngredients).ToList();
-            List<Ingredient> hasAdded = orderedIngredients.Except(optionIngredients).ToList();
-
-            // Set up the diffs in a second session variable, noting if its extra or removed
-            List<OrderRowIngredient> orderRowIngredients = new List<OrderRowIngredient>();
-            orderRowIngredients.AddRange(hasDeselected.Select(ingredient => new OrderRowIngredient
-            {
-                Ingredient = ingredient,
-                IngredientId = ingredient.Id,
-                IsRemoved = true,
-                IsExtra = false,
-                OrderRowId = newOrder.OrderRowId,
-                OrderRow = newOrder
-            }));
-            orderRowIngredients.AddRange(hasAdded.Select(ingredient => new OrderRowIngredient
-            {
-                Ingredient = ingredient,
-                IngredientId = ingredient.Id,
-                IsRemoved = false,
-                IsExtra = true,
-                OrderRowId = newOrder.OrderRowId,
-                OrderRow = newOrder
-            }));
-            _session.Save(orderRowIngredients);
-
+            _ori.CreateMany(newOrder, orderedIngredients);
+            
             // Modify price
-            newOrder.Dish.Price += _order.ModifyPrice(hasAdded, hasDeselected);
+            newOrder.Dish.Price += _order.ModifyPrice(baseDishId, orderedIngredients);
 
             _session.Save(order);
             return RedirectToAction("CartPartial", "Render");
