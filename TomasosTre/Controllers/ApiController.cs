@@ -13,6 +13,7 @@ namespace TomasosTre.Controllers
     /// </summary>
     public class ApiController : Controller
     {
+        #region Controller Setup
         private readonly ApplicationDbContext _context;
         private readonly SessionService _session;
         private readonly DishService _dish;
@@ -31,7 +32,9 @@ namespace TomasosTre.Controllers
             _dishIngredientService = dishIngredientService;
             _order = order;
         }
+        #endregion
 
+        #region Cart session CRUD
         /// <summary>
         /// Add an OrderRow to Cart if its the first one, or add to Amount if existing
         /// </summary>
@@ -40,25 +43,7 @@ namespace TomasosTre.Controllers
         //[HttpPut]
         public IActionResult Add(int id)
         {
-            Dish option = _context.Dishes.First(dish => dish.Id == id);
-            List<OrderRow> order = _session.LoadOrderRows(HttpContext);
-            OrderRow row = order.SingleOrDefault(or => or.DishId == option.Id);
-            if (row != null)
-            {
-                row.Amount += 1;
-            }
-            else
-            {
-                row = new OrderRow
-                {
-                    Dish = option,
-                    DishId = option.Id,
-                    Amount = 1,
-                };
-                order.Add(row);
-            }
-
-            _session.Save(HttpContext,order);
+            _session.Create(id);
 
             return RedirectToAction("CartPartial", "Render");
         }
@@ -71,12 +56,8 @@ namespace TomasosTre.Controllers
         //[HttpDelete]
         public IActionResult Remove(int id)
         {
-            List<OrderRow> order = _session.LoadOrderRows(HttpContext);
-            OrderRow remove = order.Find(o => o.DishId == id);
+            _session.Delete(id);
 
-            order.Remove(remove);
-
-            _session.Save(HttpContext,order);
             return RedirectToAction("CartPartial", "Render");
         }
         /// <summary>
@@ -88,14 +69,12 @@ namespace TomasosTre.Controllers
         //[HttpPatch]
         public IActionResult Set(int id, int amount)
         {
-            List<OrderRow> order = _session.LoadOrderRows(HttpContext);
-            OrderRow update = order.Find(o => o.DishId == id);
+            _session.Update(id, amount);
 
-            update.Amount = amount;
-
-            _session.Save(HttpContext,order);
             return RedirectToAction("CartPartial", "Render");
         }
+        #endregion
+
         /// <summary>
         /// Save a custom dish to session variables
         /// </summary>
@@ -110,12 +89,12 @@ namespace TomasosTre.Controllers
             isOrderedIngredients.ForEach(x => orderedIngredients.Add(_context.Ingredients.First(y => y.Id == x)));
 
             // Create a new dish, to connect this instance to the differing ingredients
-            var order = _session.LoadOrderRows(HttpContext);
+            var order = _session.LoadOrderRows();
 
             // Remove one occurence of base dish
             if (order.Find(x => x.DishId == baseDishId).Amount == 1)
             {
-                Remove(baseDishId);
+                _session.Delete(baseDishId);
             }
             else
             {
@@ -124,23 +103,9 @@ namespace TomasosTre.Controllers
 
             // Set up a new Dish
             var newDish = _dish.NewCustomDish(option.Name, option.Price);
-
-            // Why did I complicate this so much? Did I forget about orderIngredients? Commenting until that question can be answered
-            //var newIngredients = optionIngredients.Except(hasDeselected).ToList().Union(hasAdded).ToList();
-            //newIngredients.ForEach(x => newDish.DishIngredients.Add(new DishIngredient
-            //{
-            //    DishId = newDish.Id,
-            //    IngredientId = x.Id
-            //}));
-
             _dishIngredientService.CreateMany(newDish, orderedIngredients);
 
-            //orderedIngredients.ForEach(x => newDish.DishIngredients.Add(new DishIngredient
-            //{
-            //    DishId = newDish.Id,
-            //    IngredientId = x.Id
-            //}));
-
+            // Create a new OrderRow
             var newOrder = new OrderRow
             {
                 DishId = newDish.Id,
@@ -173,22 +138,16 @@ namespace TomasosTre.Controllers
                 OrderRowId = newOrder.OrderRowId,
                 OrderRow = newOrder
             }));
-            _session.Save(HttpContext, orderRowIngredients);
+            _session.Save(orderRowIngredients);
 
             // Modify price
             newOrder.Dish.Price += _order.ModifyPrice(hasAdded, hasDeselected);
-            //foreach (var addedIngredient in hasAdded.Except(optionIngredients))
-            //{
-            //    newOrder.Dish.Price += addedIngredient.Price;
-            //}
-            //foreach (var removeIngredient in hasDeselected.Except(optionIngredients))
-            //{
-            //    newOrder.Dish.Price -= removeIngredient.Price;
-            //}
-            _session.Save(HttpContext, order);
+
+            _session.Save(order);
             return RedirectToAction("CartPartial", "Render");
         }
 
+        // TODO Remove once select2 is designed away
         /// <summary>
         /// Fetches the names and Ids of Dishes to the select2 box
         /// </summary>

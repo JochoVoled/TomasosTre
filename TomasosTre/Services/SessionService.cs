@@ -3,11 +3,67 @@ using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using TomasosTre.Models;
 using TomasosTre.ViewModels;
+using System.Linq;
+using TomasosTre.Data;
 
 namespace TomasosTre.Services
 {
     public class SessionService
     {
+        private IHttpContextAccessor _http { get; }
+        private readonly ApplicationDbContext _context;
+
+        public SessionService(IHttpContextAccessor httpContext, ApplicationDbContext context)
+        {
+            _http = httpContext;
+            _context = context;
+        }
+
+        #region CRUD Methods
+        public void Create(int id)
+        {
+            Dish option = _context.Dishes.First(dish => dish.Id == id);
+            List<OrderRow> order = LoadOrderRows();
+            OrderRow row = order.SingleOrDefault(or => or.DishId == option.Id);
+            if (row != null)
+            {
+                row.Amount += 1;
+            }
+            else
+            {
+                row = new OrderRow
+                {
+                    Dish = option,
+                    DishId = option.Id,
+                    Amount = 1,
+                };
+                order.Add(row);
+            }
+
+            Save(order);
+        }
+
+        public void Delete(int id)
+        {
+            List<OrderRow> order = LoadOrderRows();
+            OrderRow remove = order.Find(o => o.DishId == id);
+
+            order.Remove(remove);
+
+            Save(order);
+        }
+
+        public void Update(int id, int amount)
+        {
+            List<OrderRow> order = LoadOrderRows();
+            OrderRow update = order.Find(o => o.DishId == id);
+
+            update.Amount = amount;
+
+            Save(order);
+        }
+        #endregion
+
         #region Save Methods
 
         /// <summary>
@@ -15,30 +71,30 @@ namespace TomasosTre.Services
         /// </summary>
         /// <param name="httpContext">Pass on static HttpContext</param>
         /// <param name="order">Current Order</param>
-        public void Save(HttpContext httpContext,List<OrderRow> order)
+        public void Save(List<OrderRow> order)
         {
             var serializedValue = JsonConvert.SerializeObject(order, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore });
-            httpContext.Session.SetString("Order", serializedValue);
+            _http.HttpContext.Session.SetString("Order", serializedValue);
         }
         /// <summary>
         /// Saves current Order to session variable
         /// </summary>
         /// <param name="httpContext">Pass on static HttpContext</param>
         /// <param name="ori">Current Order Row Ingredients</param>
-        public void Save(HttpContext httpContext, List<OrderRowIngredient> ori)
+        public void Save(List<OrderRowIngredient> ori)
         {
             var serializedValue = JsonConvert.SerializeObject(ori, new JsonSerializerSettings{ReferenceLoopHandling = ReferenceLoopHandling.Ignore});
-            httpContext.Session.SetString("ORI", serializedValue);
+            _http.HttpContext.Session.SetString("ORI", serializedValue);
         }
         /// <summary>
         /// Saves data fields during Checkout to session variable
         /// </summary>
         /// <param name="httpContext"></param>
         /// <param name="checkout"></param>
-        public void Save(HttpContext httpContext, CheckoutViewModel checkout)
+        public void Save(CheckoutViewModel checkout)
         {
             var serializedValue = JsonConvert.SerializeObject(checkout, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore });
-            httpContext.Session.SetString("Checkout", serializedValue);
+            _http.HttpContext.Session.SetString("Checkout", serializedValue);
         }
         #endregion
 
@@ -49,16 +105,16 @@ namespace TomasosTre.Services
         /// </summary>
         /// <param name="httpContext">Pass on static HttpContext</param>
         /// <returns>Current Order</returns>
-        public List<OrderRow> LoadOrderRows(HttpContext httpContext)
+        public List<OrderRow> LoadOrderRows()
         {
             List<OrderRow> order;
-            if (httpContext.Session.GetString("Order") == null)
+            if (_http.HttpContext.Session.GetString("Order") == null)
             {
                 order = new List<OrderRow>();
             }
             else
             {
-                var str = httpContext.Session.GetString("Order");
+                var str = _http.HttpContext.Session.GetString("Order");
                 order = JsonConvert.DeserializeObject<List<OrderRow>>(str);
             }
 
@@ -70,31 +126,31 @@ namespace TomasosTre.Services
         /// </summary>
         /// <param name="httpContext">Pass on static HttpContext</param>
         /// <returns>Current Order Row Ingredients</returns>
-        public List<OrderRowIngredient> LoadOrderRowIngredients(HttpContext httpContext)
+        public List<OrderRowIngredient> LoadOrderRowIngredients()
         {
             List<OrderRowIngredient> order;
-            if (httpContext.Session.GetString("ORI") == null)
+            if (_http.HttpContext.Session.GetString("ORI") == null)
             {
                 order = new List<OrderRowIngredient>();
             }
             else
             {
-                var str = httpContext.Session.GetString("ORI");
+                var str = _http.HttpContext.Session.GetString("ORI");
                 order = JsonConvert.DeserializeObject<List<OrderRowIngredient>>(str);
             }
 
             return order;
         }
-        public CheckoutViewModel LoadCheckout(HttpContext httpContext)
+        public CheckoutViewModel LoadCheckout()
         {
             CheckoutViewModel data;
-            if (httpContext.Session.GetString("Checkout") == null)
+            if (_http.HttpContext.Session.GetString("Checkout") == null)
             {
                 data = new CheckoutViewModel();
             }
             else
             {
-                var str = httpContext.Session.GetString("Checkout");
+                var str = _http.HttpContext.Session.GetString("Checkout");
                 data = JsonConvert.DeserializeObject<CheckoutViewModel>(str);
             }
 
@@ -107,34 +163,34 @@ namespace TomasosTre.Services
         /// Clears all session variables
         /// </summary>
         /// <param name="httpContext">Pass on static HttpContext</param>
-        public void ClearAll(HttpContext httpContext)
+        public void ClearAll()
         {
-            var order = LoadOrderRows(httpContext);
-            var ori = LoadOrderRowIngredients(httpContext);
-            Clear(httpContext, order);
-            Clear(httpContext, ori);
+            var order = LoadOrderRows();
+            var ori = LoadOrderRowIngredients();
+            Clear(order);
+            Clear(ori);
         }
         /// <summary>
         /// Clears OrderRows from the session variable
         /// </summary>
         /// <param name="httpContext">Pass on static HttpContext</param>
         /// <param name="order">Any List with OrderRow type</param>
-        public void Clear(HttpContext httpContext, List<OrderRow> order)
+        public void Clear(List<OrderRow> order)
         {
-            httpContext.Session.SetString("Order", "");
+            _http.HttpContext.Session.SetString("Order", "");
         }
         /// <summary>
         /// Clears OrderRowIngredients from the session variable
         /// </summary>
         /// <param name="httpContext">Pass on static HttpContext</param>
         /// <param name="ori">Any List with OrderRowIngredient type</param>
-        public void Clear(HttpContext httpContext, List<OrderRowIngredient> ori)
+        public void Clear(List<OrderRowIngredient> ori)
         {
-            httpContext.Session.SetString("ORI", "");
+            _http.HttpContext.Session.SetString("ORI", "");
         }
-        public static void Clear(HttpContext httpContext, CheckoutViewModel checkout)
+        public void Clear(CheckoutViewModel checkout)
         {
-            httpContext.Session.SetString("Checkout", "");
+            _http.HttpContext.Session.SetString("Checkout", "");
         }
         #endregion
     }

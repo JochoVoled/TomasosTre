@@ -29,6 +29,7 @@ namespace TomasosTre.Services
             if (IsDishNew(newDish))
             {
                 _context.Dishes.Add(newDish);
+                _context.SaveChanges();
             }
 
             return newDish;

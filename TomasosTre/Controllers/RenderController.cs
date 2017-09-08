@@ -59,7 +59,7 @@ namespace TomasosTre.Controllers
             };
 
             // If user is returning from a non-finished purchase
-            model.Cart.OrderRows = _session.LoadOrderRows(HttpContext);
+            model.Cart.OrderRows = _session.LoadOrderRows();
             //if (HttpContext.Session.GetString("Order") != null)
             //{
             //    string str = HttpContext.Session.GetString("Order");
@@ -75,7 +75,7 @@ namespace TomasosTre.Controllers
         /// <returns>The Cart partial view</returns>
         public IActionResult CartPartial()
         {
-            var cartModel = new CartViewModel {OrderRows = _session.LoadOrderRows(HttpContext)};
+            var cartModel = new CartViewModel {OrderRows = _session.LoadOrderRows()};
 
             cartModel.OrderRows.ForEach(x => cartModel.PriceSum += (x.Dish.Price * x.Amount));
             return PartialView("Partial/_Cart",cartModel);
@@ -120,7 +120,7 @@ namespace TomasosTre.Controllers
 
         public IActionResult CheckoutPartial(CheckoutViewModel checkout = null)
         {
-            CheckoutViewModel data = checkout.Address != null ? checkout : _session.LoadCheckout(HttpContext);
+            CheckoutViewModel data = checkout.Address != null ? checkout : _session.LoadCheckout();
             ApplicationUser user = new ApplicationUser();
             if (_signInManager.IsSignedIn(User))
             {
@@ -153,7 +153,7 @@ namespace TomasosTre.Controllers
             
             // TODO Ask how to remove this HttpContext parameter - I don't want to pass it around everywhere
             var order = _order.SetupNewOrder(checkout, user, HttpContext);
-            var ori = _session.LoadOrderRowIngredients(HttpContext);
+            var ori = _session.LoadOrderRowIngredients();
 
             //// get and prepare data
             //var user = UserStateService.GetUser(User);
@@ -179,8 +179,8 @@ namespace TomasosTre.Controllers
             //ori.ForEach(x => order.Price += x.IsExtra ? x.Ingredient.Price : 0);
 
             _order.SaveNewOrder(order, order.OrderRows, ori);
-            _session.ClearAll(HttpContext);
-            _session.Save(HttpContext, checkout);
+            _session.ClearAll();
+            _session.Save(checkout);
 
             if (checkout.IsRegistrating)
                 return RedirectToAction("Register", "Account", routeValues: "/Confirmation");

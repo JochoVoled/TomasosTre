@@ -37,8 +37,8 @@ namespace TomasosTre.Services
                 order.ApplicationUserId = User.Id;
                 order.Customer = User;
             }
-            order.OrderRows = _session.LoadOrderRows(HttpContext);
-            var ori = _session.LoadOrderRowIngredients(HttpContext);
+            order.OrderRows = _session.LoadOrderRows();
+            var ori = _session.LoadOrderRowIngredients();
 
             // connect all orderRows to new order
             foreach (var x in order.OrderRows)
