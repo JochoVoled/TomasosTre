@@ -1,0 +1,54 @@
+﻿@model IEnumerable<TomasosTre.Models.DishIngredient>
+
+@{
+    ViewData["Title"] = "DishIngredients Index";
+}
+
+<h2>Index</h2>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+                @*<th>
+                    @Html.DisplayNameFor(model => model.IsIngredient)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.BoughtExtra)
+                </th>*@
+            <th>
+                @Html.DisplayNameFor(model => model.Dish)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Ingredient)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            @*<td>
+                @Html.DisplayFor(modelItem => item.IsIngredient)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.BoughtExtra)
+            </td>*@
+            <td>
+                @Html.DisplayFor(modelItem => item.Dish.Name)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Ingredient.Name)
+            </td>
+            <td>
+                @Html.ActionLink("Edit", "Edit", new { item.DishId, item.IngredientId }) |
+                @Html.ActionLink("Details", "Details", new { item.DishId, item.IngredientId }) |
+                @Html.ActionLink("Delete", "Delete", new { item.DishId, item.IngredientId })
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
+<p><a asp-controller="Render" asp-action="Admin">Back to Admin view</a></p>

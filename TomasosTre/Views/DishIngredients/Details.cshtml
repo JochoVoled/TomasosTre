@@ -1,0 +1,42 @@
+﻿@model TomasosTre.Models.DishIngredient
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h2>Details</h2>
+
+<div>
+    <h4>DishIngredient</h4>
+    <hr />
+    <dl class="dl-horizontal">
+        @*<dt>
+            @Html.DisplayNameFor(model => model.IsIngredient)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.IsIngredient)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.BoughtExtra)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.BoughtExtra)
+        </dd>*@
+        <dt>
+            @Html.DisplayNameFor(model => model.Dish)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Dish.Name)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Ingredient)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Ingredient.Name)
+        </dd>
+    </dl>
+</div>
+<div>
+    @Html.ActionLink("Edit", "Edit", new { /* id = Model.PrimaryKey */ }) |
+    <a asp-action="Index">Back to List</a>
+</div>
