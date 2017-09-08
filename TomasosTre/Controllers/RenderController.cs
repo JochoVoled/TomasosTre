@@ -5,21 +5,18 @@ using TomasosTre.Data;
 using TomasosTre.Models;
 using TomasosTre.ViewModels.Home;
 using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json;
-using System.Collections.Generic;
 using Microsoft.AspNetCore.Identity;
 using TomasosTre.Services;
 using TomasosTre.ViewModels;
 using TomasosTre.Extensions;
 using System;
 using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.Authorization;
-using TomasosTre.Structs;
 
 namespace TomasosTre.Controllers
 {
     public class RenderController : Controller
     {
+        #region Controller Setup
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -45,7 +42,8 @@ namespace TomasosTre.Controllers
             _order = order;
             _dishIngredientService = dishIngredientService;
         }
-        
+        #endregion
+
         /// <summary>
         /// Initialize site
         /// </summary>
@@ -53,18 +51,14 @@ namespace TomasosTre.Controllers
         public IActionResult Index()
         {
             // Set up page
-            var model = new IndexViewModel {
-                Cart = new CartViewModel(),
-                DishCustomization = new DishCustomizationViewModel()
-            };
+            var model = new IndexViewModel();
+            //{
+            //    Cart = new CartViewModel(),
+            //    DishCustomization = new DishCustomizationViewModel()
+            //};
 
             // If user is returning from a non-finished purchase
             model.Cart.OrderRows = _session.LoadOrderRows();
-            //if (HttpContext.Session.GetString("Order") != null)
-            //{
-            //    string str = HttpContext.Session.GetString("Order");
-            //    model.Cart.OrderRows = JsonConvert.DeserializeObject<List<OrderRow>>(str);
-            //}
             model.Cart.OrderRows.ForEach(x => model.Cart.PriceSum += (x.Dish.Price * x.Amount));
             return View(model);
         }
@@ -99,23 +93,6 @@ namespace TomasosTre.Controllers
             {
                 return BadRequest();
             }
-            //if (dish == null)
-            //{
-            //    // Return BadRequest response code (401?)
-                
-            //}
-            
-            //foreach (var i in allIngredients)
-            //{
-            //    var isChecked = _context.DishIngredients.Where(d => d.DishId == dish.Id).FirstOrDefault(di => di.IngredientId == i.Id) != null;
-            //    model.DishIngredients.Add(new DishIngredientStruct
-            //    {
-            //        Id = i.Id,
-            //        Name = i.Name,
-            //        IsChecked = isChecked,
-            //        Price = i.Price
-            //    });
-            //}            
         }
 
         public IActionResult CheckoutPartial(CheckoutViewModel checkout = null)
@@ -151,32 +128,8 @@ namespace TomasosTre.Controllers
             }
             ApplicationUser user = _userManager.GetUserAsync(User).Result;
             
-            // TODO Ask how to remove this HttpContext parameter - I don't want to pass it around everywhere
             var order = _order.SetupNewOrder(checkout, user, HttpContext);
             var ori = _session.LoadOrderRowIngredients();
-
-            //// get and prepare data
-            //var user = UserStateService.GetUser(User);
-            //var order = new Order
-            //{
-            //    Date = DateTime.Now,
-            //    IsDelivered = false,
-            //};
-            //// ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            //if (user != null)
-            //{
-            //    order.ApplicationUserId = user.Id;
-            //    order.Customer = user;
-            //}
-            //var orderRows = SessionService.LoadOrderRows();
-            //var ori = SessionService.LoadOrderRowIngredients();
-
-            //// connect all orderRows to new order
-            //orderRows.ForEach(x => x.OrderId = order.Id);
-
-            //// get price sum, if stored, or calculate sum from stored order rows
-            //orderRows.ForEach(x => order.Price += x.Dish.Price * x.Amount);
-            //ori.ForEach(x => order.Price += x.IsExtra ? x.Ingredient.Price : 0);
 
             _order.SaveNewOrder(order, order.OrderRows, ori);
             _session.ClearAll();
