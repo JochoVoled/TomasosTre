@@ -29,7 +29,6 @@ namespace TomasosTre.Models.AccountViewModels
         [RegularExpression(@"^\d{5}$", ErrorMessage = "Zip numbers must be five numbers long")]
         public int Zip { get; set; }
         [Required]
-        [RegularExpression(@"^\D$", ErrorMessage = "City names cannot contain numbers")]
         public string City { get; set; }
     }
 }
