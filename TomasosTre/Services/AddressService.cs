@@ -50,31 +50,31 @@ namespace TomasosTre.Services
         /// <returns>The current, or relevant, Address of provided Customer</returns>
         public Address Read(string customerId, DateTime? atDate = null)
         {
-            if (atDate == null)
-            {
-                var address = _context.Addresses.FirstOrDefault(x => x.CustomerId == customerId && x.EndDateTime == null);
-                return address;
-            }
-            else
-            {
-                var address = _context.Addresses.FirstOrDefault(x => x.CustomerId == customerId &&
-                    x.StartDateTime < atDate && x.EndDateTime > atDate);
-                return address;
-            }
-            //return atDate == null ?
-            //    _context.Addresses.FirstOrDefault(x => x.CustomerId == customerId && x.EndDateTime == null):
-            //    _context.Addresses.FirstOrDefault(x => x.CustomerId == customerId &&
+            //if (atDate == null)
+            //{
+            //    var address = _context.Addresses.FirstOrDefault(x => x.CustomerId == customerId && x.EndDateTime == null);
+            //    return address;
+            //}
+            //else
+            //{
+            //    var address = _context.Addresses.FirstOrDefault(x => x.CustomerId == customerId &&
             //        x.StartDateTime < atDate && x.EndDateTime > atDate);
+            //    return address;
+            //}
+            return atDate == null ?
+                _context.Addresses.FirstOrDefault(x => x.CustomerId == customerId && x.EndDateTime == null) :
+                _context.Addresses.FirstOrDefault(x => x.CustomerId == customerId &&
+                    x.StartDateTime < atDate && x.EndDateTime > atDate);
         }
 
         /// <summary>
-        /// Archives the current address, and creates a new, up-to-date adress for the customer
+        /// Archives the current address, and creates a new, up-to-date adress for the customer.
         /// </summary>
-        /// <param name="id"></param>
-        /// <param name="data"></param>
+        /// <param name="id">The id of the Address to update</param>
+        /// <param name="data">The new Address. Requires non-null Street, Zip, City and CustomerId properties</param>
         public void Update(int id, Address data)
         {
-            ApplicationUser customer = _context.ApplicationUsers.FirstOrDefault(x => x.Id == data.CustomerId);
+            //ApplicationUser customer = _context.ApplicationUsers.FirstOrDefault(x => x.Id == data.CustomerId);
             Address current = Read(id);
 
             current.EndDateTime = DateTime.Now;
@@ -82,7 +82,7 @@ namespace TomasosTre.Services
             _context.Update(current);
             _context.SaveChanges();
 
-            Create(data.Street, data.Zip, data.City, customer.Id);
+            Create(data.Street, data.Zip, data.City, data.CustomerId);
         }
 
         public void Delete(int id)

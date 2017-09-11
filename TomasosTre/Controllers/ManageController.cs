@@ -108,6 +108,20 @@ namespace TomasosTre.Controllers
                 }
             }
 
+            Address address = _address.Read(user.Id);
+            if (address.Street != model.Street || address.Zip != model.Zip || address.City != model.City)
+            {
+                Address newAdress = new Address
+                {
+                    CustomerId = address.CustomerId,
+                    Street = model.Street,
+                    Zip = model.Zip,
+                    City = model.City
+                };
+
+                _address.Update(address.AddressId, newAdress);
+            }
+
             StatusMessage = "Your profile has been updated";
             return RedirectToAction(nameof(Index));
         }
