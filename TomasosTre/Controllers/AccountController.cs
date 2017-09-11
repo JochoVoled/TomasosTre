@@ -20,23 +20,30 @@ namespace TomasosTre.Controllers
     [Route("[controller]/[action]")]
     public class AccountController : Controller
     {
+        #region setup
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IEmailSender _emailSender;
         private readonly ILogger _logger;
+        private readonly SessionService _session;
+        private readonly AddressService _address;
 
         public AccountController(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             IEmailSender emailSender,
-            ILogger<AccountController> logger)
+            ILogger<AccountController> logger,
+            SessionService session,
+            AddressService address)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _emailSender = emailSender;
             _logger = logger;
+            _session = session;
+            _address = address;
         }
-
+        #endregion
         [TempData]
         public string ErrorMessage { get; set; }
 
@@ -208,6 +215,14 @@ namespace TomasosTre.Controllers
         [AllowAnonymous]
         public IActionResult Register(string returnUrl = null)
         {
+            var address = _session.LoadCheckout();
+
+            ViewData["Street"] = address.Address;
+            ViewData["Zip"] = address.Zip;
+            ViewData["City"] = address.City;
+            ViewData["Phone"] = address.Phone;
+            ViewData["Email"] = address.Email;
+
             ViewData["ReturnUrl"] = returnUrl;
             return View();
         }
@@ -224,6 +239,8 @@ namespace TomasosTre.Controllers
                 var result = await _userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
+                    _address.Create(model.Street, model.Zip, model.City, user.Id);
+
                     _logger.LogInformation("User created a new account with password.");
 
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);

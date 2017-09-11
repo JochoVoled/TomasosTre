@@ -19,6 +19,7 @@ namespace XTomasosTests
                 b.UseInMemoryDatabase("DefaultConnection").
                 UseInternalServiceProvider(efServiceProvider));
             Services.AddTransient<IngredientService>();
+            Services.AddTransient<AddressService>();
 
             InitDb();
         }

@@ -20,11 +20,13 @@ namespace TomasosTre.Controllers
     [Route("[controller]/[action]")]
     public class ManageController : Controller
     {
+        #region Setup
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IEmailSender _emailSender;
         private readonly ILogger _logger;
         private readonly UrlEncoder _urlEncoder;
+        private readonly AddressService _address;
 
         private const string AuthenicatorUriFormat = "otpauth://totp/{0}:{1}?secret={2}&issuer={0}&digits=6";
 
@@ -33,15 +35,17 @@ namespace TomasosTre.Controllers
           SignInManager<ApplicationUser> signInManager,
           IEmailSender emailSender,
           ILogger<ManageController> logger,
-          UrlEncoder urlEncoder)
+          UrlEncoder urlEncoder,
+          AddressService address)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _emailSender = emailSender;
             _logger = logger;
             _urlEncoder = urlEncoder;
+            _address = address;
         }
-
+        #endregion
         [TempData]
         public string StatusMessage { get; set; }
 
@@ -53,14 +57,17 @@ namespace TomasosTre.Controllers
             {
                 throw new ApplicationException($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
             }
-
+            Address address = _address.Read(user.Id);
             var model = new IndexViewModel
             {
                 Username = user.UserName,
                 Email = user.Email,
                 PhoneNumber = user.PhoneNumber,
                 IsEmailConfirmed = user.EmailConfirmed,
-                StatusMessage = StatusMessage
+                StatusMessage = StatusMessage,
+                Street = address.Street,
+                Zip = address.Zip,
+                City = address.City
             };
 
             return View(model);
@@ -74,7 +81,7 @@ namespace TomasosTre.Controllers
             {
                 return View(model);
             }
-
+            // TODO Check if adress fields has change, and call Update if so
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {

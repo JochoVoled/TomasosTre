@@ -23,5 +23,13 @@ namespace TomasosTre.Models.AccountViewModels
         [Display(Name = "Confirm password")]
         [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; }
+        [Required]
+        public string Street { get; set; }
+        [Required]
+        [RegularExpression(@"^\d{5}$", ErrorMessage = "Zip numbers must be five numbers long")]
+        public int Zip { get; set; }
+        [Required]
+        [RegularExpression(@"^\D$", ErrorMessage = "City names cannot contain numbers")]
+        public string City { get; set; }
     }
 }

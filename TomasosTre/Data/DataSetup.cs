@@ -11,7 +11,7 @@ namespace TomasosTre.Data
         public static void Setup(ApplicationDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
         {
             SetupAccountsAsync(userManager, roleManager);
-
+            SetupAddresses(context);
             // Set up all storange tables
             if (!context.Dishes.Any())
             {
@@ -83,6 +83,31 @@ namespace TomasosTre.Data
             var result = await userManager.CreateAsync(adminUser, "Pa$$w0rd");
 
             await userManager.AddToRoleAsync(adminUser, adminRole.Name);
+        }
+
+        private static void SetupAddresses(ApplicationDbContext context)
+        {
+            var adminUser = context.ApplicationUsers.First(x => x.Email.Contains("admin"));
+            var studentUser = context.ApplicationUsers.First(x => x.Email.Contains("student"));
+
+            Address adminAddress = new Address
+            {
+                CustomerId = adminUser.Id,
+                Street = "Admin Ave 14",
+                Zip = 12435,
+                City = "Testington"
+            };
+
+            Address studentAddress = new Address
+            {
+                CustomerId = studentUser.Id,
+                Street = "Storgatan 14",
+                Zip = 12312,
+                City = "Testington"
+            };
+
+            context.Addresses.AddRange(adminAddress, studentAddress);
+            context.SaveChanges();
         }
 
         private static void Save(ApplicationDbContext context)

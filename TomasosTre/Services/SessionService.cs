@@ -93,6 +93,11 @@ namespace TomasosTre.Services
         /// <param name="checkout"></param>
         public void Save(CheckoutViewModel checkout)
         {
+            // Clear card credentials to prevent saving
+            checkout.CardNumber = "";
+            checkout.SecurityNumber = 0;
+            checkout.ExpiryMonth = "";
+
             var serializedValue = JsonConvert.SerializeObject(checkout, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore });
             _http.HttpContext.Session.SetString("Checkout", serializedValue);
         }

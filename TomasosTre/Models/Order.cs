@@ -10,6 +10,7 @@ namespace TomasosTre.Models
         public decimal Price { get; set; }
         public string ApplicationUserId { get; set; }
         public bool IsDelivered { get; set; }
+        public int AddressId { get; set; }
         public Address Address { get; set; }
 
         public ApplicationUser Customer { get; set; }
