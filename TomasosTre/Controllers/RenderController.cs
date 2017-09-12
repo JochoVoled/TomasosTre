@@ -25,6 +25,7 @@ namespace TomasosTre.Controllers
         private readonly SessionService _session;
         private readonly OrderService _order;
         private readonly DishIngredientService _dishIngredientService;
+        private readonly AddressService _address;
 
         public RenderController(ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
@@ -32,7 +33,8 @@ namespace TomasosTre.Controllers
             ILogger<RenderController> logger,
             SessionService session,
             OrderService order,
-            DishIngredientService dishIngredientService)
+            DishIngredientService dishIngredientService,
+            AddressService address)
         {
             _context = context;
             _userManager = userManager;
@@ -41,6 +43,7 @@ namespace TomasosTre.Controllers
             _session = session;
             _order = order;
             _dishIngredientService = dishIngredientService;
+            _address = address;
         }
         #endregion
 
@@ -128,12 +131,19 @@ namespace TomasosTre.Controllers
             }
             ApplicationUser user = _userManager.GetUserAsync(User).Result;
             
-            var order = _order.SetupNewOrder(checkout, user, HttpContext);
-            var ori = _session.LoadOrderRowIngredients();
+            var order = _order.SetupNewOrder(user);
+            if (user == null)
+            {
+                var address = _address.Create(checkout.Address, checkout.Zip, checkout.City);
+                order.AddressId = address.AddressId;
+            }
+            var or = _order.SetupNewOrderRows(order);
+            var ori = _order.SetupNewOrderRowIngredients(order);
 
-            _order.SaveNewOrder(order, order.OrderRows, ori);
-            _session.ClearAll();
             _session.Save(checkout);
+
+            _order.SaveNewOrder(order, or, ori);
+            _session.ClearAll();            
 
             if (checkout.IsRegistrating)
                 return RedirectToAction("Register", "Account", routeValues: "/Confirmation");

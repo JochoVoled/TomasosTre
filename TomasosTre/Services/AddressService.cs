@@ -15,7 +15,15 @@ namespace TomasosTre.Services
         }
         #endregion
 
-        public void Create(string street, int zip, string city, string customerId = null)
+        /// <summary>
+        /// Creates an Address and saves it to database
+        /// </summary>
+        /// <param name="street"></param>
+        /// <param name="zip"></param>
+        /// <param name="city"></param>
+        /// <param name="customerId">Optional: A customer ID whose adress this is</param>
+        /// <returns>The created Address, with newly minted id</returns>
+        public Address Create(string street, int zip, string city, string customerId = null)
         {
             Address address = new Address
             {
@@ -26,10 +34,12 @@ namespace TomasosTre.Services
                 StartDateTime = DateTime.Now,
                 EndDateTime = null,
             };
-            address.Customer = customerId != null ? _context.ApplicationUsers.First(x => x.Id == customerId) : null;
+            //address.Customer = customerId != null ? _context.ApplicationUsers.First(x => x.Id == customerId) : null;
 
             _context.Addresses.Add(address);
             _context.SaveChanges();
+
+            return address;
         }
 
         /// <summary>

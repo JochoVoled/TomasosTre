@@ -13,19 +13,18 @@ namespace TomasosTre.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly SessionService _session;
+        private readonly AddressService _address;
 
-        public OrderService(ApplicationDbContext context, SessionService session)
+        public OrderService(ApplicationDbContext context, SessionService session, AddressService address)
         {
             _context = context;
             _session = session;
+            _address = address;
         }
 
-        public Order SetupNewOrder(CheckoutViewModel checkout, ApplicationUser User, HttpContext HttpContext)
+        //public Order SetupNewOrder(CheckoutViewModel checkout, ApplicationUser User)
+        public Order SetupNewOrder(ApplicationUser User)
         {
-            //DateTime expires = checkout.ExpiryMonth.ToDateTime();
-
-            // get and prepare data
-            //var User = UserStateService.GetUser(User);
             var order = new Order
             {
                 Date = DateTime.Now,
@@ -36,48 +35,44 @@ namespace TomasosTre.Services
             {
                 order.ApplicationUserId = User.Id;
                 order.Customer = User;
+                order.AddressId = _address.Read(User.Id).AddressId;
             }
-            order.OrderRows = _session.LoadOrderRows();
-            var ori = _session.LoadOrderRowIngredients();
 
-            // connect all orderRows to new order
-            foreach (var x in order.OrderRows)
+            return order;
+        }
+
+        public List<OrderRow> SetupNewOrderRows(Order order)
+        {
+            var OrderRows = _session.LoadOrderRows();
+            foreach (var x in OrderRows)
             {
                 x.OrderId = order.Id;
                 order.Price += x.Dish.Price * x.Amount;
-                var relatedOris = ori.Where(y => y.OrderRowId == x.OrderRowId);
-                x.OrderRowIngredient = new List<OrderRowIngredient>();
-                x.OrderRowIngredient.AddRange(relatedOris);
+                x.Dish = null;
             }
-            //order.OrderRows.ForEach(x => x.OrderId = order.Id);
-            //order.OrderRows.ForEach(x => order.Price += x.Dish.Price * x.Amount);
-            ori.ForEach(x => order.Price += x.IsExtra ? x.Ingredient.Price : 0);
+            return OrderRows;
+        }
+        public List<OrderRowIngredient> SetupNewOrderRowIngredients(Order order)
+        {
+            List<OrderRowIngredient> ori = _session.LoadOrderRowIngredients();
 
-            return order;
+            foreach (var x in ori)
+            {
+                order.Price += x.IsExtra ? x.Ingredient.Price : 0;
+                x.OrderRow = null;
+                x.Ingredient = null;
+            }
+
+            return ori;
         }
 
         public void SaveNewOrder(Order order, List<OrderRow> orderRows, List<OrderRowIngredient> ori)
         {
             // save readied order
             _context.Orders.Add(order);
+            _context.SaveChanges();
+
             _context.OrderRows.AddRange(orderRows);
-            /* TODO getting error on SaveChanges: +		$exception	{System.ArgumentException: An item with the same key has already been added. Key: 2
-                at System.ThrowHelper.ThrowAddingDuplicateWithKeyArgumentException(Object key)
-                at System.Collections.Generic.Dictionary`2.TryInsert(TKey key, TValue value, InsertionBehavior behavior)
-                at Microsoft.EntityFrameworkCore.Storage.Internal.InMemoryTable`1.Create(IUpdateEntry entry)
-                at Microsoft.EntityFrameworkCore.Storage.Internal.InMemoryStore.ExecuteTransaction(IEnumerable`1 entries, IDiagnosticsLogger`1 updateLogger)
-                at Microsoft.EntityFrameworkCore.Storage.Internal.InMemoryDatabase.SaveChanges(IReadOnlyList`1 entries)
-                at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChanges(IReadOnlyList`1 entriesToSave)
-                at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChanges(Boolean acceptAllChangesOnSuccess)
-                at Microsoft.EntityFrameworkCore.DbContext.SaveChanges(Boolean acceptAllChangesOnSuccess)
-                at Microsoft.EntityFrameworkCore.DbContext.SaveChanges()
-                at TomasosTre.Services.OrderService.SaveNewOrder(Order order, List`1 orderRows, List`1 ori) in C:\Source\Repos\TomasosTre\TomasosTre\Services\OrderService.cs:line 64
-                at TomasosTre.Controllers.RenderController.Order(CheckoutViewModel checkout) in C:\Source\Repos\TomasosTre\TomasosTre\Controllers\RenderController.cs:line 161
-                at lambda_method(Closure , Object , Object[] )
-                at Microsoft.Extensions.Internal.ObjectMethodExecutor.Execute(Object target, Object[] parameters)
-                at Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker.< InvokeActionMethodAsync > d__12.MoveNext()}
-            System.ArgumentException
-            */
             _context.SaveChanges();
 
             _context.OrderRowIngredients.AddRange(ori);
