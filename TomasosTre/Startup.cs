@@ -28,6 +28,9 @@ namespace TomasosTre
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseInMemoryDatabase("DefaultConnection"));
 
+            services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("AzureConnection")));
+
             //services.Configure<IISOptions>(options =>
             //    options.UseInMemoryDatabase("DefaultConnection")
             //    );
