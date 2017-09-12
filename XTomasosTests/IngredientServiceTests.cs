@@ -15,7 +15,7 @@ namespace XTomasosTests
         {
             base.InitDb();
             ServiceProvider = Services.BuildServiceProvider();
-            var context = ServiceProvider.GetService<ApplicationDbContext>();
+            ApplicationDbContext context = ServiceProvider.GetService<ApplicationDbContext>();
             context.Ingredients.Add(new Ingredient { Name = "Banana", Price = 2 });
             context.Ingredients.Add(new Ingredient { Name = "Apple",  Price = 5 });
 
