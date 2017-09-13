@@ -20,6 +20,7 @@ namespace XTomasosTests
                 UseInternalServiceProvider(efServiceProvider));
             Services.AddTransient<IngredientService>();
             Services.AddTransient<AddressService>();
+            Services.AddTransient<OrderService>();
 
             InitDb();
         }
