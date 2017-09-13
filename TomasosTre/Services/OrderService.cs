@@ -12,18 +12,15 @@ namespace TomasosTre.Services
     public class OrderService
     {
         private readonly ApplicationDbContext _context;
-        private readonly SessionService _session;
         private readonly AddressService _address;
-
-        public OrderService(ApplicationDbContext context, SessionService session, AddressService address)
+        
+        public OrderService(ApplicationDbContext context, AddressService address)
         {
             _context = context;
-            _session = session;
             _address = address;
         }
 
-        //public Order SetupNewOrder(CheckoutViewModel checkout, ApplicationUser User)
-        public Order SetupNewOrder(ApplicationUser User)
+        public Order CreateOrder(ApplicationUser User)
         {
             var order = new Order
             {
@@ -34,49 +31,65 @@ namespace TomasosTre.Services
             if (User != null)
             {
                 order.ApplicationUserId = User.Id;
-                order.Customer = User;
                 order.AddressId = _address.Read(User.Id).AddressId;
             }
+            _context.Orders.Add(order);
+            _context.SaveChanges();
 
             return order;
         }
 
-        public List<OrderRow> SetupNewOrderRows(Order order)
+        public OrderRow CreateOrderRow(int dishId, int orderId, int amount)
         {
-            var OrderRows = _session.LoadOrderRows();
-            foreach (var x in OrderRows)
+            OrderRow orderRow = new OrderRow
             {
-                x.OrderId = order.Id;
-                order.Price += x.Dish.Price * x.Amount;
-                x.Dish = null;
-            }
-            return OrderRows;
-        }
-        public List<OrderRowIngredient> SetupNewOrderRowIngredients(Order order)
-        {
-            List<OrderRowIngredient> ori = _session.LoadOrderRowIngredients();
+                DishId = dishId,
+                Dish = null,
+                OrderId = orderId,
+                Order = null,
+                Amount = amount,
+            };
 
-            foreach (var x in ori)
+            _context.OrderRows.Add(orderRow);
+            _context.SaveChanges();
+
+            return orderRow;
+        }
+        public OrderRowIngredient CreateOrderRowIngredient(int orderRowId, int ingredientId, bool isExtra = true, bool isRemoved = false)
+        {
+            OrderRowIngredient ori = new OrderRowIngredient
             {
-                order.Price += x.IsExtra ? x.Ingredient.Price : 0;
-                x.OrderRow = null;
-                x.Ingredient = null;
-            }
+                OrderRow = null,
+                OrderRowId = orderRowId,
+                Ingredient = null,
+                IngredientId = ingredientId,
+                IsExtra = isExtra,
+                IsRemoved = isRemoved
+            };
+
+            _context.OrderRowIngredients.Add(ori);
+            _context.SaveChanges();
 
             return ori;
         }
-
-        public void SaveNewOrder(Order order, List<OrderRow> orderRows, List<OrderRowIngredient> ori)
+        public decimal ModifyOrderPriceOnOrderedDishes(List<OrderRow> orderRows)
         {
-            // save readied order
-            _context.Orders.Add(order);
-            _context.SaveChanges();
-
-            _context.OrderRows.AddRange(orderRows);
-            _context.SaveChanges();
-
-            _context.OrderRowIngredients.AddRange(ori);
-            _context.SaveChanges();
+            decimal priceChange = 0m;
+            foreach (var x in orderRows)
+            {
+                var dish = _context.Dishes.Find(x.DishId);
+                priceChange += dish.Price * x.Amount;
+            }
+            return priceChange;
+        }
+        public decimal ModifyOrderPriceOnAddedIngredient(List<OrderRowIngredient> extraIngredients)
+        {
+            decimal priceChange = 0m;
+            foreach (var x in extraIngredients)
+            {
+                priceChange += x.IsExtra ? x.Ingredient.Price : 0;
+            }
+            return priceChange;
         }
 
         public decimal ModifyPrice(int dishId, List<Ingredient> orderedIngredients)

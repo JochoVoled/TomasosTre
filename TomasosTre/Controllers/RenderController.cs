@@ -131,19 +131,27 @@ namespace TomasosTre.Controllers
             }
             ApplicationUser user = _userManager.GetUserAsync(User).Result;
             
-            var order = _order.SetupNewOrder(user);
+            var order = _order.CreateOrder(user);
             if (user == null)
             {
                 var address = _address.Create(checkout.Address, checkout.Zip, checkout.City);
                 order.AddressId = address.AddressId;
             }
-            var or = _order.SetupNewOrderRows(order);
-            var ori = _order.SetupNewOrderRowIngredients(order);
+            var or = _session.LoadOrderRows();
+            or.ForEach(x => _order.CreateOrderRow(x.DishId, order.Id, x.Amount));
+            //_order.CreateOrderRows(order);
+
+            var ori = _session.LoadOrderRowIngredients();
+            ori.ForEach(x => _order.CreateOrderRowIngredient(x.OrderRowId, x.IngredientId, x.IsExtra, x.IsRemoved));
+            //var ori = _order.CreateOrderRowIngredients(order);
+
+            order.Price += _order.ModifyOrderPriceOnOrderedDishes(or);
+            order.Price += _order.ModifyOrderPriceOnAddedIngredient(ori);
 
             _session.Save(checkout);
 
-            _order.SaveNewOrder(order, or, ori);
-            _session.ClearAll();            
+            //_order.SaveNewOrder(order, or, ori);
+            _session.ClearAll();
 
             if (checkout.IsRegistrating)
                 return RedirectToAction("Register", "Account", routeValues: "/Confirmation");
