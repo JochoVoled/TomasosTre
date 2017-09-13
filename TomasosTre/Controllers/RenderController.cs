@@ -122,21 +122,23 @@ namespace TomasosTre.Controllers
 
         public IActionResult Order(CheckoutViewModel checkout)
         {
-            // Last Validation
+            // Abort if card has expired
             DateTime expires = checkout.ExpiryMonth.ToExpiryDate();
-
             if (expires < DateTime.Now)
             {
                 return RedirectToAction("CheckoutPartial", checkout);
             }
+
+            // Apply the user's Address if one is logged in
             ApplicationUser user = _userManager.GetUserAsync(User).Result;
+            Address address = user == null
+                ? _address.Create(checkout.Address, checkout.Zip, checkout.City)
+                : _address.Read(user.Id);
             
+            // Load Order, with OrderRows and -Ingredients from session variables, and add them to database
             var order = _order.CreateOrder(user);
-            if (user == null)
-            {
-                var address = _address.Create(checkout.Address, checkout.Zip, checkout.City);
-                order.AddressId = address.AddressId;
-            }
+            order.AddressId = address.AddressId;
+
             var or = _session.LoadOrderRows();
             or.ForEach(x => _order.CreateOrderRow(x.DishId, order.Id, x.Amount));
             //_order.CreateOrderRows(order);
@@ -145,12 +147,12 @@ namespace TomasosTre.Controllers
             ori.ForEach(x => _order.CreateOrderRowIngredient(x.OrderRowId, x.IngredientId, x.IsExtra, x.IsRemoved));
             //var ori = _order.CreateOrderRowIngredients(order);
 
-            order.Price += _order.ModifyOrderPriceOnOrderedDishes(or);
-            order.Price += _order.ModifyOrderPriceOnAddedIngredient(ori);
+            // Modify the price
+            _order.UpdateOrderPrice(order, or, ori);
 
-            _session.Save(checkout);
-
-            //_order.SaveNewOrder(order, or, ori);
+            // Clear session variables, but add address for future account registration
+            if (user == null)
+                _session.Save(checkout);
             _session.ClearAll();
 
             if (checkout.IsRegistrating)

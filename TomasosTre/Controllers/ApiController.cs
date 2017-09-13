@@ -116,7 +116,7 @@ namespace TomasosTre.Controllers
             _ori.CreateMany(newOrder, orderedIngredients);
             
             // Modify price
-            newOrder.Dish.Price += _order.ModifyPrice(baseDishId, orderedIngredients);
+            newOrder.Dish.Price += _order.ModifyCartPrice(baseDishId, orderedIngredients);
 
             _session.Save(order);
             return RedirectToAction("CartPartial", "Render");

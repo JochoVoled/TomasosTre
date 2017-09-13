@@ -1,23 +1,18 @@
-﻿using Microsoft.AspNetCore.Http;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using TomasosTre.Data;
-using TomasosTre.Extensions;
 using TomasosTre.Models;
-using TomasosTre.ViewModels;
 
 namespace TomasosTre.Services
 {
     public class OrderService
     {
         private readonly ApplicationDbContext _context;
-        private readonly AddressService _address;
-        
-        public OrderService(ApplicationDbContext context, AddressService address)
+
+        public OrderService(ApplicationDbContext context)
         {
             _context = context;
-            _address = address;
         }
 
         public Order CreateOrder(ApplicationUser User)
@@ -27,12 +22,6 @@ namespace TomasosTre.Services
                 Date = DateTime.Now,
                 IsDelivered = false,
             };
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            if (User != null)
-            {
-                order.ApplicationUserId = User.Id;
-                order.AddressId = _address.Read(User.Id).AddressId;
-            }
             _context.Orders.Add(order);
             _context.SaveChanges();
 
@@ -41,6 +30,7 @@ namespace TomasosTre.Services
 
         public OrderRow CreateOrderRow(int dishId, int orderId, int amount)
         {
+            // For code integrity, test if desired order is already deliver, and abort addition if so
             OrderRow orderRow = new OrderRow
             {
                 DishId = dishId,
@@ -72,27 +62,28 @@ namespace TomasosTre.Services
 
             return ori;
         }
-        public decimal ModifyOrderPriceOnOrderedDishes(List<OrderRow> orderRows)
+
+
+        public decimal UpdateOrderPrice(Order order, List<OrderRow> orderRows, List<OrderRowIngredient> extraIngredients)
         {
-            decimal priceChange = 0m;
+            decimal priceChange = order.Price;
             foreach (var x in orderRows)
             {
                 var dish = _context.Dishes.Find(x.DishId);
                 priceChange += dish.Price * x.Amount;
             }
-            return priceChange;
-        }
-        public decimal ModifyOrderPriceOnAddedIngredient(List<OrderRowIngredient> extraIngredients)
-        {
-            decimal priceChange = 0m;
             foreach (var x in extraIngredients)
             {
                 priceChange += x.IsExtra ? x.Ingredient.Price : 0;
             }
+
+            _context.Orders.Update(order);
+            _context.SaveChanges();
+
             return priceChange;
         }
 
-        public decimal ModifyPrice(int dishId, List<Ingredient> orderedIngredients)
+        public decimal ModifyCartPrice(int dishId, List<Ingredient> orderedIngredients)
         {
             List<Ingredient> optionIngredients = _context.DishIngredients.Where(x => x.DishId == dishId).Select(x => x.Ingredient).ToList();
             List<Ingredient> subtracted = optionIngredients.Except(orderedIngredients).ToList();
