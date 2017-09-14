@@ -34,11 +34,11 @@
                         <label asp-for="@item.Name" class="control-label">@item.Name</label>
                         @if (item.IsChecked)
                         {
-                            <input name="ingredient" type="checkbox" data-dish="@item.Id" checked />
+                            <input name="ingredient-@item.Id" type="checkbox" checked />
                         }
                         else
                         {
-                            <input name="ingredient" type="checkbox" data-dish="@item.Id" />
+                            <input name="ingredient-@item.Id" type="checkbox" />
                         }
                     </div>
                 }

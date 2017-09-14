@@ -53,6 +53,16 @@ namespace TomasosTre.Services
             return data;
         }
 
+        public void UpdateDishIngredients(Dish dish, List<Ingredient> updatedIngredients)
+        {
+            List<Ingredient> optionIngredients = _context.DishIngredients.Where(x => x.DishId == dish.Id).Select(x => x.Ingredient).ToList();
+            List<Ingredient> delete = optionIngredients.Except(updatedIngredients).ToList();
+            List<Ingredient> add = updatedIngredients.Except(optionIngredients).ToList();
+            DeleteMany(dish, delete);
+            CreateMany(dish, add);
+            _context.SaveChanges();
+        }
+
         public void CreateMany(Dish dish, List<Ingredient> ingredients)
         {
             dish.DishIngredients = new List<DishIngredient>();
@@ -62,6 +72,21 @@ namespace TomasosTre.Services
                 IngredientId = x.Id
             }));
             _context.DishIngredients.AddRange(dish.DishIngredients);
+            _context.SaveChanges();
+        }
+
+        public void DeleteMany(Dish dish, List<Ingredient> ingredients)
+        {
+            dish.DishIngredients = new List<DishIngredient>();
+            foreach (var item in ingredients)
+            {
+                var dishIngredient = _context.DishIngredients.First(x => x.DishId == dish.Id && x.IngredientId == item.Id);
+                if (dishIngredient == null)
+                {
+                    continue;
+                }
+                _context.DishIngredients.Remove(dishIngredient);
+            }
             _context.SaveChanges();
         }
     }

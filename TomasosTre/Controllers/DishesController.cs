@@ -10,6 +10,7 @@ using TomasosTre.Models;
 using Microsoft.AspNetCore.Authorization;
 using TomasosTre.ViewModels.Admin;
 using TomasosTre.Services;
+using Microsoft.AspNetCore.Http;
 
 namespace TomasosTre.Controllers
 {
@@ -73,13 +74,19 @@ namespace TomasosTre.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,CategoryId,Price")] Dish dish)
-        {
+        public async Task<IActionResult> Create([Bind("Id,Name,CategoryId,Price")] Dish dish, IFormCollection form)
+            {
             if (ModelState.IsValid)
             {
+                var ingredients = new List<Ingredient>();
+                foreach (var name in form.Keys.Where(y => y.Contains("ingredient")))
+                {
+                    var ingredientId = Int32.Parse(name.Substring(name.IndexOf('-') + 1));
+                    ingredients.Add(_context.Ingredients.Find(ingredientId));
+                }
                 _context.Add(dish);
-                // TODO Add DishIngredients to corresponding table
                 await _context.SaveChangesAsync();
+                _dishIngredientService.CreateMany(dish, ingredients);
                 return RedirectToAction(nameof(Index));
             }
             ViewData["CategoryId"] = new SelectList(_context.Categories, "CategoryId", "Name", dish.CategoryId);
@@ -111,7 +118,7 @@ namespace TomasosTre.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,CategoryId,Price")] Dish dish)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,CategoryId,Price")] Dish dish, IFormCollection form)
         {
             if (id != dish.Id)
             {
@@ -120,6 +127,14 @@ namespace TomasosTre.Controllers
 
             if (ModelState.IsValid)
             {
+                var currentDishIngredients = _dishIngredientService.GetIngredientsRelatedTo(dish);
+                var ingredients = new List<Ingredient>();
+                foreach (var name in form.Keys.Where(y => y.Contains("ingredient")))
+                {
+                    var ingredientId = Int32.Parse(name.Substring(name.IndexOf('-')+1));
+                    ingredients.Add(_context.Ingredients.Find(ingredientId));
+                }
+                _dishIngredientService.UpdateDishIngredients(dish, ingredients);
                 try
                 {
                     _context.Update(dish);
