@@ -11,6 +11,7 @@ using TomasosTre.ViewModels;
 using TomasosTre.Extensions;
 using System;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Authorization;
 
 namespace TomasosTre.Controllers
 {
@@ -55,14 +56,18 @@ namespace TomasosTre.Controllers
         {
             // Set up page
             var model = new IndexViewModel();
-            //{
-            //    Cart = new CartViewModel(),
-            //    DishCustomization = new DishCustomizationViewModel()
-            //};
 
             // If user is returning from a non-finished purchase
             model.Cart.OrderRows = _session.LoadOrderRows();
-            model.Cart.OrderRows.ForEach(x => model.Cart.PriceSum += (x.Dish.Price * x.Amount));
+            if (model.Cart.OrderRows != null)
+            {
+                model.Cart.OrderRows.ForEach(x => model.Cart.PriceSum += (x.Dish.Price * x.Amount));
+            }
+            else
+            {
+                model.Cart.PriceSum = 0;
+            }
+            
             return View(model);
         }
 
@@ -122,6 +127,10 @@ namespace TomasosTre.Controllers
 
         public IActionResult Order(CheckoutViewModel checkout)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
             // Abort if card has expired
             DateTime expires = checkout.ExpiryMonth.ToExpiryDate();
             if (expires < DateTime.Now)
@@ -160,9 +169,8 @@ namespace TomasosTre.Controllers
             else
                 return View("Confirmation");
         }
-        
-        // Disabled while in development. Tested, and it works
-        //[Authorize(Roles = "Admin")]
+
+        [Authorize(Roles = "Admin")]
         public IActionResult Admin()
         {
             return View("Admin");
