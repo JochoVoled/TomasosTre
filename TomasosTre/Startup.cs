@@ -12,28 +12,35 @@ namespace TomasosTre
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public IConfiguration Configuration { get; }
+        public IHostingEnvironment HostingEnvironment;
+
+        public Startup(IConfiguration configuration, IHostingEnvironment hostingEnvironment)
         {
             Configuration = configuration;
+            HostingEnvironment = hostingEnvironment;
         }
-
-        public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            //services.AddDbContext<ApplicationDbContext>(options =>
-            //    options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+            switch (HostingEnvironment.EnvironmentName)
+            {
+                case Constants.DEVELOPMENT_ENVIRONMENT:
+                    services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("LocalConnection")));
+                    break;
+                //case Constants.STAGED_ENVIRONMENT:
+                //    services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+                //    break;
+                case Constants.PRODUCTION_ENVIRONMENT:
+                    services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("AzureConnection")));
+                    break;
+                default:
+                    services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("LocalConnection")));
+                    break;
+            }
 
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseInMemoryDatabase("DefaultConnection"));
-
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("AzureConnection")));
-
-            //services.Configure<IISOptions>(options =>
-            //    options.UseInMemoryDatabase("DefaultConnection")
-            //    );
+            //services.Configure<IISOptions>(options => options.UseInMemoryDatabase("DefaultConnection"));
 
             services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
