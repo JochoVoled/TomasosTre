@@ -127,10 +127,11 @@ namespace TomasosTre.Controllers
 
         public IActionResult Order(CheckoutViewModel checkout)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest();
-            }
+            // TODO Uncomment this once I discover what breaks if its commented. Also, see if I can return the page with its validation errors if form is invalid
+            //if (!ModelState.IsValid)
+            //{
+            //    return BadRequest();
+            //}
             // Abort if card has expired
             DateTime expires = checkout.ExpiryMonth.ToExpiryDate();
             if (expires < DateTime.Now)
@@ -145,8 +146,8 @@ namespace TomasosTre.Controllers
                 : _address.Read(user.Id);
             
             // Load Order, with OrderRows and -Ingredients from session variables, and add them to database
-            var order = _order.CreateOrder(user);
-            order.AddressId = address.AddressId;
+            var order = _order.CreateOrder(user,address);
+            //order.AddressId = address.AddressId;
 
             var or = _session.LoadOrderRows();
             or.ForEach(x => _order.CreateOrderRow(x.DishId, order.Id, x.Amount));

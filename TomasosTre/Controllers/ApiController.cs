@@ -106,11 +106,22 @@ namespace TomasosTre.Controllers
             }
 
             // Set up a new Dish
-            var newDish = _dish.NewCustomDish(option.Name, option.Price);
-            _dishIngredientService.CreateMany(newDish, orderedIngredients);
+            Dish newDish = null;
+            if (_dish.IsDishNew(option, orderedIngredients))
+            {
+                var added = _dishIngredientService.GetAdded(option, orderedIngredients);
+                System.Text.StringBuilder mods = BuildCustomDishName(option, orderedIngredients, added);
+
+                newDish = _dish.CreateDish($"Custom {option.Name}{mods.ToString()}", option.Price, option.CategoryId);
+                _dishIngredientService.CreateMany(newDish, orderedIngredients);
+            }
+            else
+            {
+                option = _dish.GetExistingDish(option, orderedIngredients);
+            }
 
             // Create a new OrderRow
-            var newOrder = new OrderRow(newDish, 1);
+            var newOrder = new OrderRow(newDish ?? option, 1);
 
             order.Add(newOrder);
             _ori.CreateMany(newOrder, orderedIngredients);
@@ -120,6 +131,30 @@ namespace TomasosTre.Controllers
 
             _session.Save(order);
             return RedirectToAction("CartPartial", "Render");
+        }
+
+        private System.Text.StringBuilder BuildCustomDishName(Dish option, List<Ingredient> orderedIngredients, List<Ingredient> added)
+        {
+            System.Text.StringBuilder mods = new System.Text.StringBuilder();
+            if (added.Count > 0)
+            {
+                mods.Append(" with");
+                added.ForEach(x => mods.Append(" " + x.Name));
+            }
+            var subtracted = _dishIngredientService.GetSubtracted(option, orderedIngredients);
+            if (added.Count > 0 && subtracted.Count > 0)
+            {
+                mods.Append(", but");
+            }
+
+            //System.Text.StringBuilder withouts = new System.Text.StringBuilder();
+            if (subtracted.Count > 0)
+            {
+                mods.Append(" without");
+                subtracted.ForEach(x => mods.Append(" " + x.Name));
+            }
+
+            return mods;
         }
 
         // TODO Remove once select2 is designed away

@@ -113,13 +113,13 @@ namespace TomasosTre.Services
         public List<OrderRow> LoadOrderRows()
         {
             List<OrderRow> order;
-            if (_http.HttpContext.Session.GetString("Order") == null)
+            var str = _http.HttpContext.Session.GetString("Order");
+            if (string.IsNullOrEmpty(str))
             {
                 order = new List<OrderRow>();
             }
             else
-            {
-                var str = _http.HttpContext.Session.GetString("Order");
+            {                
                 order = JsonConvert.DeserializeObject<List<OrderRow>>(str);
             }
 
@@ -134,13 +134,13 @@ namespace TomasosTre.Services
         public List<OrderRowIngredient> LoadOrderRowIngredients()
         {
             List<OrderRowIngredient> order;
-            if (_http.HttpContext.Session.GetString("ORI") == null)
+            var str = _http.HttpContext.Session.GetString("ORI");
+            if (string.IsNullOrEmpty(str))
             {
                 order = new List<OrderRowIngredient>();
             }
             else
-            {
-                var str = _http.HttpContext.Session.GetString("ORI");
+            {                
                 order = JsonConvert.DeserializeObject<List<OrderRowIngredient>>(str);
             }
 
@@ -149,13 +149,14 @@ namespace TomasosTre.Services
         public CheckoutViewModel LoadCheckout()
         {
             CheckoutViewModel data;
-            if (_http.HttpContext.Session.GetString("Checkout") == null)
+            var str = _http.HttpContext.Session.GetString("Checkout");
+            if (string.IsNullOrEmpty(str))
             {
                 data = new CheckoutViewModel();
             }
             else
             {
-                var str = _http.HttpContext.Session.GetString("Checkout");
+                
                 data = JsonConvert.DeserializeObject<CheckoutViewModel>(str);
             }
 

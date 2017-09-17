@@ -15,12 +15,13 @@ namespace TomasosTre.Services
             _context = context;
         }
 
-        public Order CreateOrder(ApplicationUser User)
+        public Order CreateOrder(ApplicationUser User, Address address)
         {
             var order = new Order
             {
                 Date = DateTime.Now,
                 IsDelivered = false,
+                AddressId = address.AddressId
             };
             _context.Orders.Add(order);
             _context.SaveChanges();

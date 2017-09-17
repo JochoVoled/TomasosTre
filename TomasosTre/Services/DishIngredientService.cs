@@ -53,11 +53,23 @@ namespace TomasosTre.Services
             return data;
         }
 
+        public List<Ingredient> GetAdded(Dish dish, List<Ingredient> selected)
+        {
+            List<Ingredient> optionIngredients = _context.DishIngredients.Where(x => x.DishId == dish.Id).Select(x => x.Ingredient).ToList();
+            return selected.Except(optionIngredients).ToList();
+        }
+
+        public List<Ingredient> GetSubtracted(Dish dish, List<Ingredient> selected)
+        {
+            List<Ingredient> optionIngredients = _context.DishIngredients.Where(x => x.DishId == dish.Id).Select(x => x.Ingredient).ToList();
+            return optionIngredients.Except(selected).ToList();
+        }
+
         public void UpdateDishIngredients(Dish dish, List<Ingredient> updatedIngredients)
         {
             List<Ingredient> optionIngredients = _context.DishIngredients.Where(x => x.DishId == dish.Id).Select(x => x.Ingredient).ToList();
-            List<Ingredient> delete = optionIngredients.Except(updatedIngredients).ToList();
-            List<Ingredient> add = updatedIngredients.Except(optionIngredients).ToList();
+            List<Ingredient> delete = GetSubtracted(dish, updatedIngredients);
+            List<Ingredient> add = GetAdded(dish, updatedIngredients);
             DeleteMany(dish, delete);
             CreateMany(dish, add);
             _context.SaveChanges();
