@@ -99,6 +99,7 @@ namespace TomasosTre.Controllers
             {
                 // TODO Solve Bug: Function does not remove OrderRow
                 _session.Delete(baseDishId);
+                order = _session.LoadOrderRows();
             }
             else
             {
