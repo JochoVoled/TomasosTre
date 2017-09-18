@@ -90,7 +90,7 @@ namespace TomasosTre
 
             //if (HostingEnvironment.EnvironmentName == Constants.PRODUCTION_ENVIRONMENT)
             //{
-                context.Database.Migrate();
+                //context.Database.Migrate();
             //}
         }
     }
