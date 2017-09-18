@@ -7,6 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using TomasosTre.Data;
 using TomasosTre.Models;
 using TomasosTre.Services;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.AzureAppServices;
 
 namespace TomasosTre
 {
@@ -61,8 +63,15 @@ namespace TomasosTre
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ApplicationDbContext context, RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ApplicationDbContext context, RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager, ILoggerFactory loggerFactory )
         {
+            if (env.IsProduction())
+                loggerFactory.AddAzureWebAppDiagnostics(
+                 new AzureAppServicesDiagnosticsSettings
+                 {
+                     OutputTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss zzz} [{Level}] {RequestId}-{SourceContext}: {Message}{NewLine}{Exception}"
+                 });
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -86,12 +95,13 @@ namespace TomasosTre
                     template: "{controller=Render}/{action=Index}/{id?}");
             });
 
-            DataSetup.Setup(context, userManager,roleManager);
+            if (HostingEnvironment.IsProduction() || HostingEnvironment.IsStaging())
+            {
+                context.Database.Migrate();
+            }
 
-            //if (HostingEnvironment.EnvironmentName == Constants.PRODUCTION_ENVIRONMENT)
-            //{
-                //context.Database.Migrate();
-            //}
+            DataSetup.Setup(context, userManager,roleManager).Wait();
+
         }
     }
 }
