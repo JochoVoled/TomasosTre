@@ -16,7 +16,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "TomasosTre": {
+    "TomasosTre (Development)": {
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
@@ -24,7 +24,7 @@
       },
       "applicationUrl": "http://localhost:62932/"
     },
-    "TomasosTre (Staging)": {
+    "TomasosTre (Staged)": {
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
