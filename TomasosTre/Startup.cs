@@ -31,9 +31,10 @@ namespace TomasosTre
                 case Constants.DEVELOPMENT_ENVIRONMENT:
                     services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("LocalConnection")));
                     break;
-                //case Constants.STAGED_ENVIRONMENT:
-                //    services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
-                //    break;
+                case Constants.STAGED_ENVIRONMENT:
+                    services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("AzureConnection")));
+                    //services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+                    break;
                 case Constants.PRODUCTION_ENVIRONMENT:
                     services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("AzureConnection")));
                     break;
