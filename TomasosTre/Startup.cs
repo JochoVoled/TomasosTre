@@ -87,6 +87,11 @@ namespace TomasosTre
             });
 
             DataSetup.Setup(context, userManager,roleManager);
+
+            if (HostingEnvironment.EnvironmentName == Constants.PRODUCTION_ENVIRONMENT)
+            {
+                context.Database.Migrate();
+            }
         }
     }
 }
