@@ -26,22 +26,28 @@ namespace TomasosTre
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            switch (HostingEnvironment.EnvironmentName)
-            {
-                case Constants.DEVELOPMENT_ENVIRONMENT:
-                    services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("LocalConnection")));
-                    break;
-                case Constants.STAGED_ENVIRONMENT:
-                    services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("AzureConnection")));
-                    //services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
-                    break;
-                case Constants.PRODUCTION_ENVIRONMENT:
-                    services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("AzureConnection")));
-                    break;
-                default:
-                    services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("LocalConnection")));
-                    break;
-            }
+            if (HostingEnvironment.IsProduction() || HostingEnvironment.IsStaging())
+                services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+            else
+                services.AddDbContext<ApplicationDbContext>(options => options.UseInMemoryDatabase("DefaultConnection"));
+            
+            //switch (HostingEnvironment.EnvironmentName)
+            //{
+
+            //case Constants.DEVELOPMENT_ENVIRONMENT:
+            //    services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("LocalConnection")));
+            //    break;
+            //case Constants.STAGED_ENVIRONMENT:
+            //    services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("AzureConnection")));
+            //    //services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+            //    break;
+            //case Constants.PRODUCTION_ENVIRONMENT:
+            //    services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("AzureConnection")));
+            //    break;
+            //default:
+            //    services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("LocalConnection")));
+            //    break;
+            //}
 
             //services.Configure<IISOptions>(options => options.UseInMemoryDatabase("DefaultConnection"));
 
