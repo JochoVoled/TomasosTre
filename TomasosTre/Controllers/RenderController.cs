@@ -67,7 +67,7 @@ namespace TomasosTre.Controllers
             {
                 model.Cart.PriceSum = 0;
             }
-            
+            model.Menu = _context.Dishes.ToList();
             return View(model);
         }
 

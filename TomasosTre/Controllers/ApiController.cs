@@ -163,14 +163,14 @@ namespace TomasosTre.Controllers
         /// Fetches the names and Ids of Dishes to the select2 box
         /// </summary>
         /// <returns>An collection of anon objects with IDs and Names</returns>
-        public IActionResult GetDishNames()
-        {
-            var model = _context.Dishes.Select(x => new
-            {
-                id = x.Id,
-                text = x.Name
-            }).ToList();
-            return Json(model);
-        }
+        //public IActionResult GetDishNames()
+        //{
+        //    var model = _context.Dishes.Select(x => new
+        //    {
+        //        id = x.Id,
+        //        text = x.Name
+        //    }).ToList();
+        //    return Json(model);
+        //}
     }
 }

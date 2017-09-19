@@ -33,7 +33,7 @@
         display: none;
     }
 }
-.t3-btn-warning, .t3-btn-danger {
+.t3-btn-warning, .t3-btn-danger, .t3-btn-success {
     background-color: #CCC;
     margin: 0 2px;
 }
@@ -42,6 +42,9 @@
     }
     .t3-btn-danger:hover {
         background-color: #d9534f;
+    }
+    .t3-btn-success:hover {
+        background-color: #5CB85C;
     }
 .t3-order-row {
     padding: 3px 0;

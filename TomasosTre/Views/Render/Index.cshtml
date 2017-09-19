@@ -3,13 +3,19 @@
 }
 @using Microsoft.AspNetCore.Mvc.Rendering
 @model TomasosTre.ViewModels.Home.IndexViewModel
-@* Search menu *@
+
 <div id="root">
-    <div class="col-sm-12" id="menuSearch">
-        <label>Menu</label>
-        <select class="js-example-data-array col-md-12"></select>
+    <div class="col-sm-4" id="menuSearch">
+        <h2 class="text-center">Menu</h2>
+        @foreach (var item in Model.Menu)
+        {
+            <div class="form-horizontal" >
+                <span class="col-sm-9 h4">@item.Name, @item.Price SEK</span>
+                <button class="col-sm-2 add btn t3-btn-success" data-dish="@item.Id"><span class="glyphicon glyphicon-plus"></span></button>
+            </div>
+        }
     </div>
-    <div class="col-sm-12" id="cart">
+    <div class="col-sm-8" id="cart">
         @Html.Partial("Partial/_Cart", Model.Cart)
     </div>
 

@@ -1,20 +1,11 @@
 ﻿$(document).ready(function () {
-    $.get('/Api/GetDishNames').then(function (response) {
-        $(".js-example-data-array").select2({
-            placeholder: "Select a dish to order",
-            data: response
-            
-        });
-        $(".js-example-data-array").on('change', function (e) {
-            var val = $(".js-example-data-array").val();
-            $.post('/Api/Add', { id: val }, function (response)
-            {
-                $("#cart").html(response);
-                createOrderRowEvents();
-            });
+    $(".add").on('click', function (e) {
+        var val = $(this).data("dish");
+        $.post('/Api/Add', { id: val }, function (response) {
+            $("#cart").html(response);
+            createOrderRowEvents();
         });
     });
-
     if ($(".amount")) {
         createOrderRowEvents();
     }
@@ -23,12 +14,10 @@
 
 function createOrderRowEvents() {
     $(".amount").on("change",function () {
-        //console.log($(this));
         var dishId = $(this).data("dish");
         var amount = $(this).val();
         $.post("/Api/Set", { id: dishId, amount: amount }, function (response)
         {
-            // debug line.
             $("#cart").html(response);
             createOrderRowEvents();
         });
@@ -81,29 +70,6 @@ function registerCheckoutEvents() {
         $.get('Render/CheckoutPartial', data, function (response)
         {
             $("#root").html(response);
-            //setupCheckout();
-        });
-    });
-}
-
-function setupCheckout() {
-    $("#order").on("click", function() {
-        var data = {
-            CardNumber: $("#card-number").val(),
-            SecurityNumber: $("#security-number").val(),
-            ExpiryMonth: $("#expiry-month").val(),
-            Address: $("#address").val(),
-            Zip: $("#zip").val(),
-            City: $("#city").val(),
-            Email: $("#email").val(),
-            IsRegistrating: $("#isRegistrating").checked
-        };
-
-        $.get('Api/PlaceOrder', data, function (response) {
-            $("#register").html(response);
-            if (data.IsRegistrating) {
-                setupCheckout();
-            }            
         });
     });
 }
